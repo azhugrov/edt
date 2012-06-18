@@ -14,9 +14,7 @@ class Parser {
     var parsed = <Fragment>[];
     var lines = _toLines(src);
         
-  }
-  
-    
+  }   
   
   
   /** Transforms to lines */
