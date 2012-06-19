@@ -1,6 +1,6 @@
 /** Parses a edt template */
 class Parser {
-  static final int NEW_LINE_CODE = "/n".charCodeAt(0);
+  static final int NEW_LINE_CODE = 47;
   /** numbers of symbols we need to consume in order to determine next action */
   static final int LOOK_AHEAD_SYMBOLS = 3;
   

@@ -2,5 +2,6 @@
 #import("Lib.dart");
 
 void main() {
-  print("Compilation started");
+  var code = "/n".charCodeAt(0);
+  print("'/n' char code: $code");
 }

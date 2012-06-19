@@ -1,7 +1,7 @@
 #library("hypcomm:scanner-test");
 #import("../Lib.dart");
 //yes, it sucks. you need define your path in order to run this test
-#import("../../side-projects/dart/dart-sdk/lib/unittest/unittest.dart");
+#import("../../dart/dart-sdk/lib/unittest/unittest.dart");
 
 void main() {
   test("simple case", () {

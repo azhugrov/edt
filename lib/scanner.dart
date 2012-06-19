@@ -21,59 +21,71 @@ class ScannerImpl implements Scanner {
       var line = _lines[lineNumber - 1];
       var buf = new Queue<String>();
       var i = 0;
-      while (i < line.length) {
-        if (buf.length < 3) {
+      var lineEOF = false; //this flag is used to indicate that we consumed the end of line
+      while (!lineEOF) {
+        //this also included the condition when we approach the end of line
+        if (buf.length < 3 && i < line.length) {
           //acumulate for analysis
           buf.add(line.substring(i, i + 1));
           i++;
         } else {
           //ready for analysis
-          String token = buf.toString();
+          String token = _concatAll(buf);
           if (token.startsWith(Tokens.OPEN_INCLUDE)) {
-            tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
-            textTokenBuf.clear();
+            if (!textTokenBuf.isEmpty()) {
+              tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
+              textTokenBuf.clear();
+            }
             tokens.add(new OpenIncludeToken(lineNumber));
             buf.clear();
-            i += 3;
           } 
           else if (token.startsWith(Tokens.OPEN_EXPRESSION)) {
-            tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
-            textTokenBuf.clear();
+            if (!textTokenBuf.isEmpty()) {
+              tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
+              textTokenBuf.clear();
+            }
             tokens.add(new OpenExpressionToken(lineNumber));
             buf.clear();
-            i += 3;
           }
           else if (token.startsWith(Tokens.OPEN_UNESCAPED_EXPRESSION)) {
-            tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
-            textTokenBuf.clear();
+            if (!textTokenBuf.isEmpty()) {
+              tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
+              textTokenBuf.clear();
+            }
             tokens.add(new OpenUnescapedExpressionToken(lineNumber));
-            buf.clear();
-            i += 3;            
+            buf.clear();            
           }          
           else if (token.startsWith(Tokens.OPEN_CODE)) {
-            tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
-            textTokenBuf.clear();
+            if (!textTokenBuf.isEmpty()) {
+              tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
+              textTokenBuf.clear();
+            }
             tokens.add(new OpenCodeToken(lineNumber));
             buf.removeFirst();
-            buf.removeFirst();
-            i += 2;           
+            buf.removeFirst();           
           }
           else if (token.startsWith(Tokens.CLOSE)) {
-            tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
-            textTokenBuf.clear();
+            if (!textTokenBuf.isEmpty()) {
+              tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
+              textTokenBuf.clear();
+            }
             tokens.add(new CloseToken(lineNumber));
             buf.removeFirst();
             buf.removeFirst();
-            i += 2;
           }
           else {
             //the buffer input does not correspond any predefined term
-            textTokenBuf.add(buf.removeFirst());              
+            //may be empty if we parse an empty line
+            if (!buf.isEmpty()) textTokenBuf.add(buf.removeFirst());              
+          }
+          
+          if (i == line.length) {
+            lineEOF = true; //processed last entry            
           }
         }          
       }
       //add remained unprocessed string
-      textTokenBuf.add(buf.toString());
+      textTokenBuf.add(_concatAll(buf));
     }
     
     if (!textTokenBuf.isEmpty()) {
@@ -82,11 +94,21 @@ class ScannerImpl implements Scanner {
     
     return tokens;
   }
+  
+  String _concatAll(Queue<String> buf) {
+    StringBuffer result = new StringBuffer();
+    buf.forEach((String char) {
+      result.add(char);
+    });    
+    return result.toString();   
+  }
+  
     
 }
 
+/** A list of predefined tokens */
 class Tokens {
-  static final String OPEN_INCLUDE = "{{<";
+  static final String OPEN_INCLUDE = "{{>";
   static final String OPEN_CODE = "{{";
   static final String OPEN_EXPRESSION = "{{=";
   static final String OPEN_UNESCAPED_EXPRESSION = "{{-";
