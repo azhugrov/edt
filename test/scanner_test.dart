@@ -22,8 +22,7 @@ void main() {
 
 void printTokens(List<Token> tokens) {
   expect(tokens, isNotNull);
-  for (var i = 0; i < tokens.length; i++) {
-    Token token = tokens[i];
+  for (var token in tokens) {
     print("token: $token");    
   }
 }

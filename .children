@@ -1,3 +1,4 @@
+test/parser_test.dart
 RuntimeLib.dart
 test/scanner_test.dart
 CompilerLib.dart
