@@ -1,8 +1,8 @@
-
+/** A scanner interface */
 interface Scanner default ScannerImpl {
-  
+  /** a base contructor */
   Scanner(List<String> lines);
-  
+  /** parses into a stream of tokens */
   List<Token> tokenize();  
   
 }
@@ -18,7 +18,7 @@ class ScannerImpl implements Scanner {
     //note that text token could be multiline
     var textTokenBuf = new StringBuffer();
     for (var lineNumber = 1; lineNumber <= _lines.length; lineNumber++) {
-      var line = _lines[lineNumber];
+      var line = _lines[lineNumber - 1];
       var buf = new Queue<String>();
       var i = 0;
       while (i < line.length) {
@@ -107,11 +107,19 @@ class OpenIncludeToken extends Token {
   
   OpenIncludeToken(int line): super(line);
   
+  String toString() {
+    return "OpenIncludeToken[line=${line}]";
+  }
+  
 }
 
 class OpenCodeToken extends Token {
   
   OpenCodeToken(int line): super(line);
+  
+  String toString() {
+    return "OpenCodeToken[line=${line}]";
+  }
   
 }
 
@@ -119,17 +127,29 @@ class OpenExpressionToken extends Token {
   
   OpenExpressionToken(int line): super(line);
   
+  String toString() {
+    return "OpenExpressionToken[line=${line}]";
+  }
+  
 }
 
 class OpenUnescapedExpressionToken extends Token {
   
   OpenUnescapedExpressionToken(int line): super(line);
   
+  String toString() {
+    return "OpenUnescapedExpressionToken[line=${line}]";
+  }
+  
 }
 
 class CloseToken extends Token {
   
   CloseToken(int line): super(line);
+  
+  String toString() {
+    return "CloseToken[line=${line}]";
+  }
   
 }
 
@@ -138,4 +158,11 @@ class TextToken extends Token {
   String _content;
   
   TextToken(this._content, int line): super(line);
+  /** gets a content of a given token */
+  String get content() => _content;
+  
+  String toString() {
+    return "TextToken[line=${line};content=${content}]";  
+  }
+  
 }
