@@ -2,7 +2,7 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-#library("hypcomm:edt");
+#library("desntech:edt");
 #import("dart:io");
 #source("lib/args.dart");
 #source("lib/args_utils.dart");

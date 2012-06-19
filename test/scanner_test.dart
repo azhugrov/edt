@@ -2,7 +2,7 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-#library("hypcomm:scanner-test");
+#library("desntech:scanner-test");
 #import("../Lib.dart");
 //yes, it sucks. you need define your path in order to run this test
 #import("../../side-projects/dart/dart-sdk/lib/unittest/unittest.dart");

@@ -4,5 +4,5 @@
 
 //An runtime library contains support classes that needed for execution 
 //the template at runtime
-#library("hypcomm:edt:runtime");
+#library("desntech:edt:runtime");
 #source("runtime/template.dart");
