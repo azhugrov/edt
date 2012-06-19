@@ -2,10 +2,7 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-#library("hypcomm:edt");
-#import("dart:io");
-#source("lib/args.dart");
-#source("lib/args_utils.dart");
-#source("lib/compiler.dart");
-#source("lib/parser.dart");
-#source("lib/scanner.dart");
+//An runtime library contains support classes that needed for execution 
+//the template at runtime
+#library("hypcomm:edt:runtime");
+#source("runtime/template.dart");
