@@ -83,7 +83,12 @@ List<String> _splitPath(filename) {
     return [device, dir, basename, ext];
   } 
   else {
-    throw new Exception("not implemented for a given platform: ${Platform.operatingSystem}");  
+    Match result = SplitPathRePosix.firstMatch(filename);
+    String root = result.group(1) !== null ? result.group(1) : '';
+    String dir = result.group(2) !== null ? result.group(2) : '';
+    String basename = result.group(3) !== null ? result.group(3) : '';
+    String ext = result.group(4) !== null ? result.group(4) : '';
+    return [root, dir, basename, ext];
   }
 }
 
@@ -117,9 +122,23 @@ String pathNormalize(String path) {
     buf.add(tail);
     return buf.toString();
   } else {
-    //NOTE(zhuhrou) please implement this for other platforms
-    //the sources could be found in node.js implementation
-    throw new Exception("not implemented yet");
+    bool isAbsolute = path.substring(0, 1) == '/';
+    bool trailingSlash = path.substring(path.length - 1) == '/';
+
+    // Normalize the path
+    List<String> pathParts = path.split(const RegExp('/')).filter((p) {
+      return p != "";
+    });
+    path = Strings.join(_normalizeArray(pathParts, !isAbsolute), '/');
+
+    if (path == "" && !isAbsolute) {
+      path = '.';
+    }
+    if (path != "" && trailingSlash) {
+      path = "$path/";
+    }
+
+    return (isAbsolute ? "/$path" : path);
   }
 }
 
@@ -138,8 +157,8 @@ String pathJoin(List<String> paths) {
     print("joined: $joined");
     return pathNormalize(joined);      
   } else {
-    //NOTE(zhuhrou) please implement this for other platforms
-    throw new Exception("not implemented yet");
+    List<String> filteredPaths = paths.filter((p) => p != "");
+    return pathNormalize(Strings.join(filteredPaths, '/'));
   }  
 }
 
