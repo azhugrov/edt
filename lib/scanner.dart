@@ -121,7 +121,7 @@ class Tokens {
 
 abstract class Token {
   /** Line where token is placed */
-  int _line;
+  final int _line;
   
   Token(this._line);
   

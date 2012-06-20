@@ -5,7 +5,7 @@
 #library("desntech:parser-test");
 #import("../Lib.dart");
 //yes, it sucks. you need define your path in order to run this test
-#import("../../side-projects/dart/dart-sdk/lib/unittest/unittest.dart");
+#import("../../dart/dart-sdk/lib/unittest/unittest.dart");
 
 void main() {
   test("simple case", () {
@@ -16,7 +16,7 @@ void main() {
                         'and finally this is our last line';
     var parser = new Parser();
     List<Fragment> ast = parser.parse(unparsedText);
-    printFragments(ast);    
+    expect(ast.length, equals(9));    
   });  
 }
 

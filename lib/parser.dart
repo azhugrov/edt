@@ -5,7 +5,7 @@
 /** Parses a edt template */
 class Parser {
   /** The newline char code */
-  static final int NEW_LINE_CODE = 47;
+  static final int NEW_LINE_CODE = 10;
   
   /** the current parser state */
   int _state = ParserStates.UNKNOWN;  
@@ -54,7 +54,7 @@ class Parser {
   
   void _processTokenInUnknownState(Token token, Queue<Fragment> stack) {
     if (token is TextToken) {
-      _state = ParserStates.TEXT;
+      _state = ParserStates.TEMPLATE;
       stack.add(new TextFragment(token.content, token.line));
     }
     else if (token is OpenIncludeToken) {
@@ -74,7 +74,7 @@ class Parser {
       stack.add(new UnescapedOutputFragment(token.line));
     }
     else if (token is CloseToken) {
-      throw const ParseException(token.line, token);     
+      throw new ParseException(token.line, token);     
     } 
     else {
       throw new IllegalArgumentException(token);
@@ -102,7 +102,7 @@ class Parser {
       stack.add(new UnescapedOutputFragment(token.line));
     }
     else if (token is CloseToken) {
-      throw const ParseException(token.line, token);
+      throw new ParseException(token.line, token);
     }
     else {
       throw new IllegalArgumentException(token);
@@ -113,26 +113,26 @@ class Parser {
     if (token is TextToken) {
       IncludeFragment includeToken = stack.last();
       if (includeToken.include != null) {
-        throw const ParseException(token.line, token);        
+        throw new ParseException(token.line, token);        
       }
       includeToken.include = token.content;      
     }
     else if (token is OpenIncludeToken) {
-      throw const ParseException(token.line, token);
+      throw new ParseException(token.line, token);
     }
     else if (token is OpenCodeToken) {
-      throw const ParseException(token.line, token);
+      throw new ParseException(token.line, token);
     }
     else if (token is OpenExpressionToken) {
-      throw const ParseException(token.line, token);
+      throw new ParseException(token.line, token);
     }
     else if (token is OpenUnescapedExpressionToken) {
-      throw const ParseException(token.line, token);
+      throw new ParseException(token.line, token);
     }
     else if (token is CloseToken) {
       IncludeFragment includeToken = stack.last();
       if (includeToken.include == null) {
-        throw const ParseException(token.line, token);
+        throw new ParseException(token.line, token);
       }
       _state = ParserStates.UNKNOWN;
     }
@@ -145,26 +145,26 @@ class Parser {
     if (token is TextToken) {
       CodeFragment codeFragment = stack.last();
       if (codeFragment.code != null) {
-        throw const ParseException(token.line, token);        
+        throw new ParseException(token.line, token);        
       }
       codeFragment.code = token.content;
     }
     else if (token is OpenIncludeToken) {
-      throw const ParseException(token.line, token);    
+      throw new ParseException(token.line, token);    
     }
     else if (token is OpenCodeToken) {
-      throw const ParseException(token.line, token);
+      throw new ParseException(token.line, token);
     }
     else if (token is OpenExpressionToken) {
-      throw const ParseException(token.line, token);
+      throw new ParseException(token.line, token);
     }
     else if (token is OpenUnescapedExpressionToken) {
-      throw const ParseException(token.line, token);
+      throw new ParseException(token.line, token);
     }
     else if (token is CloseToken) {
       CodeFragment codeFragment = stack.last();
       if (codeFragment.code == null) {
-        throw const ParseException(token.line, token);    
+        throw new ParseException(token.line, token);    
       }
       _state = ParserStates.UNKNOWN;
     }
@@ -177,26 +177,26 @@ class Parser {
     if (token is TextToken) {
       EscapedOutputFragment expressionFragment = stack.last();
       if (expressionFragment.expression != null) {
-        throw const ParseException(token.line, token);          
+        throw new ParseException(token.line, token);          
       }
       expressionFragment.expression = token.content;
     }
     else if (token is OpenIncludeToken) {
-      throw const ParseException(token.line, token);  
+      throw new ParseException(token.line, token);  
     }
     else if (token is OpenCodeToken) {
-      throw const ParseException(token.line, token);    
+      throw new ParseException(token.line, token);    
     }
     else if (token is OpenExpressionToken) {
-      throw const ParseException(token.line, token);    
+      throw new ParseException(token.line, token);    
     }
     else if (token is OpenUnescapedExpressionToken) {
-      throw const ParseException(token.line, token);    
+      throw new ParseException(token.line, token);    
     }
     else if (token is CloseToken) {
       EscapedOutputFragment expressionFragment = stack.last();
       if (expressionFragment == null) {
-        throw const ParseException(token.line, token);
+        throw new ParseException(token.line, token);
       }
       _state = ParserStates.UNKNOWN;
     }
@@ -209,26 +209,26 @@ class Parser {
     if (token is TextToken) {
       UnescapedOutputFragment expressionFragment = stack.last();
       if (expressionFragment.expression != null) {
-        throw const ParseException(token.line, token);  
+        throw new ParseException(token.line, token);  
       }
       expressionFragment.expression = token.content;
     }
     else if (token is OpenIncludeToken) {
-      throw const ParseException(token.line, token);    
+      throw new ParseException(token.line, token);    
     }
     else if (token is OpenCodeToken) {
-      throw const ParseException(token.line, token);    
+      throw new ParseException(token.line, token);    
     }
     else if (token is OpenExpressionToken) {
-      throw const ParseException(token.line, token);    
+      throw new ParseException(token.line, token);    
     }
     else if (token is OpenUnescapedExpressionToken) {
-      throw const ParseException(token.line, token);    
+      throw new ParseException(token.line, token);    
     }
     else if (token is CloseToken) {
       UnescapedOutputFragment expressionFragment = stack.last();
       if (expressionFragment == null) {
-        throw const ParseException(token.line, token);
+        throw new ParseException(token.line, token);
       }
       _state = ParserStates.UNKNOWN;
     }
@@ -255,7 +255,10 @@ class Parser {
       if (src.charCodeAt(i) == NEW_LINE_CODE) {
         lines.add(buf.toString());
         buf.clear();
-      }    
+      }      
+    }
+    if (!buf.isEmpty()) {
+      lines.add(buf.toString());      
     }
     return lines;
   }
@@ -365,18 +368,16 @@ class UnescapedOutputFragment extends Fragment {
 class ParserStates {
   /** an unitialized state */
   static final int UNKNOWN = -1;
-  /** processing a template text */
-  static final int TEXT = 0;
   /** processing a template content */
-  static final int TEMPLATE = 1;
+  static final int TEMPLATE = 0;
   /** processing an include content */
-  static final int INCLUDE = 2;
+  static final int INCLUDE = 1;
   /** processing a code fragment */
-  static final int CODE = 3;
+  static final int CODE = 2;
   /** processing an escaped expression */
-  static final int ESCAPED_EXPRESSION = 4;
+  static final int ESCAPED_EXPRESSION = 3;
   /** processing an unescaped expression */
-  static final int UNESCAPED_EXPRESSION = 5;
+  static final int UNESCAPED_EXPRESSION = 4;
 }
 
 /** thrown when parse exception arise */
