@@ -2,17 +2,25 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+interface Parser default ParserImpl {
+  
+  Parser();
+  
+  /** Parses a given template text */
+  List<Fragment> parse(String src);  
+  
+}
+
 /** Parses a edt template */
-class Parser {
+class ParserImpl implements Parser {
   /** The newline char code */
   static final int NEW_LINE_CODE = 10;
   
   /** the current parser state */
-  int _state = ParserStates.UNKNOWN;  
+  int _state = ParserStates.UNKNOWN;
   
-  Parser() {}
+  ParserImpl() {}
   
-  /** Parses a given template text */
   List<Fragment> parse(String src) {
     var parsed = <Fragment>[];
     var lines = _toLines(src);

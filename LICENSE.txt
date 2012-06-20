@@ -1,7 +1,7 @@
 This license applies to all parts of library except files that were copied from dart SDK:
 * lib/args.dart
 * lib/args_utils.dart
-* lib/filenames.dart
+
 Their license could be found here - http://code.google.com/p/dart/source/browse/trunk/LICENSE
 
 Copyright 2012, Aliaksandr Zhuhrou. All rights reserved.

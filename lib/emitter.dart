@@ -3,11 +3,30 @@
 // BSD-style license that can be found in the LICENSE file.
 
 /** Emittes a dart code for a compiled template. */
-class TemplateEmitter {
+interface TemplateEmitter default TemplateEmitterImpl {
   
-  TemplateEmitter() {
-    
-  }
+  TemplateEmitter();
+  
+  /** Emits start of class template with given name */
+  String emitStartClass(String className);
+  
+  String emitTemplateFragment(TemplateFragment fragment);
+  
+  String emitCodeFragment(CodeFragment fragment);
+  
+  String emitEscapedOutputFragment(EscapedOutputFragment fragment);
+  
+  String emitUnescapedOutputFragment(UnescapedOutputFragment fragment);
+  
+  /** Emits end of class template */
+  String emitEndClass();
+  
+}
+
+/** Standart implementation of emitter */
+class TemplateEmitterImpl implements TemplateEmitter {
+  
+  TemplateEmitterImpl() {}
   
   /** Emits start of class template with given name */
   String emitStartClass(String className) {
