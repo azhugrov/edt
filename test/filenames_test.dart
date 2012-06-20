@@ -7,8 +7,12 @@
 #import("../../side-projects/dart/dart-sdk/lib/unittest/unittest.dart");
 
 void main() {
-  test("check regular expressions", () {
+  test("check normalize", () {
     var result = pathNormalize("C:\\foo\\bar\\\\baz\\..\\asdf\\quux\\.\\");
     expect(result, equals(@"C:\foo\bar\asdf\quux\"));
-  });  
+  });
+  test("check join", () {
+    var result = pathJoin(['/foo', 'bar', 'baz/asdf', 'quux', '..']);
+    print(result);
+  });
 }

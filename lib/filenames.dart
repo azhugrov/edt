@@ -37,8 +37,6 @@ final RegExp SplitPathRePosix = const RegExp(@"^(\/?)([\s\S]+\/(?!$)|\/)?((?:[\s
  * relative and absolute paths)
  */
 List<String> _normalizeArray(List<String> parts, bool allowAboveRoot) {
-  printArray(parts);
-  
   // if the path tries to go above the root, `up` ends up > 0
   int up = 0;
   for (var i = parts.length - 1; i >= 0; i--) {
@@ -66,23 +64,15 @@ List<String> _normalizeArray(List<String> parts, bool allowAboveRoot) {
   return parts;
 }
 
-void printArray(List<String> array) {
-  for (String item in array) {
-    print("Split item: $item");    
-  }  
-}
-
 String pathNormalize(String path) {
-  /** Whenever underlying platform is windows */
   bool isWindows = Platform.operatingSystem == 'windows';
   if (isWindows) {
     Match result = SplitDeviceReWin.firstMatch(path);
-    String device = result.group(1);
-    bool isUnc = device !== null && device.substring(1, 2) != ":";
+    String device = result.group(1) != null ? result.group(1) : "";
+    bool isUnc = (device != "" && device !== null) && device.substring(1, 2) != ":";
     bool isAbsolute = result.group(2) != null || isUnc; // UNC paths are always absolute
     String tail = result.group(3);
     bool trailingSlash = const RegExp(@"[\\/]$").hasMatch(tail);
-    print("trailingSlash: $trailingSlash");
     List<String> pathParts = tail.split(const RegExp(@"[\\/]+")).filter((part) {
       return part != "";
     });
@@ -104,14 +94,30 @@ String pathNormalize(String path) {
     buf.add(tail);
     return buf.toString();
   } else {
-    //NOTE(zhuhrou) please implement this for other platform
+    //NOTE(zhuhrou) please implement this for other platforms
     //the sources could be found in node.js implementation
     throw new Exception("not implemented yet");
   }
 }
 
 String pathJoin(List<String> paths) {
-  
+  bool isWindows = Platform.operatingSystem == 'windows';
+  if (isWindows) {
+    List<String> filteredPaths = paths.filter((String path) => path != "");
+    String joined = Strings.join(filteredPaths, @"\");
+
+    // Make sure that the joined path doesn't start with two slashes
+    // - it will be mistaken for an unc path by normalize() -
+    // unless the paths[0] also starts with two slashes
+    if (const RegExp(@"^[\\/]{2}").hasMatch(joined) && !(const RegExp(@"^[\\/]{2}").hasMatch(paths[0]))) {
+      joined = joined.substring(1);
+    }
+    print("joined: $joined");
+    return pathNormalize(joined);      
+  } else {
+    //NOTE(zhuhrou) please implement this for other platforms
+    throw new Exception("not implemented yet");
+  }  
 }
 
 String getCurrentDirectory() {
