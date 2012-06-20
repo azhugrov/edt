@@ -3,10 +3,12 @@
 // BSD-style license that can be found in the LICENSE file.
 /** compiles and read templates */
 class Compiler {
-  
+  /** Dir for compile output */
   String _outDirectory;
-  
+  /** An template to compile */
   String _templateFile;
+  /** A working directory */
+  Uri _cwd;
   
   /** 
    * As dart does not support metaprogramming 
@@ -15,12 +17,11 @@ class Compiler {
   Compiler(Options options) {
     var argsParser = new ArgParser();
     //path to template
-    argsParser.addOption("t");
     //path to output directory
     argsParser.addOption("out");
     var cmd = argsParser.parse(options.arguments);
-    _templateFile = cmd["t"];
-    _outDirectory = cmd["out"];    
+    _outDirectory = cmd["out"];
+    _cwd = getCurrentDirectory();
   }
   
   /** Compile a given template to output directory */
@@ -33,5 +34,8 @@ class Compiler {
     return (new File(templatePath)).readAsText();    
   }
   
+  void _processInclude(String include) {
+    
+  }
   
 }

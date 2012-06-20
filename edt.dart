@@ -6,6 +6,6 @@
 #import("Lib.dart");
 
 void main() {
-  var code = "/n".charCodeAt(0);
-  print("'/n' char code: $code");
+  //not implemented yet
+  print("test");
 }

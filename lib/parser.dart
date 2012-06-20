@@ -55,7 +55,7 @@ class Parser {
   void _processTokenInUnknownState(Token token, Queue<Fragment> stack) {
     if (token is TextToken) {
       _state = ParserStates.TEMPLATE;
-      stack.add(new TextFragment(token.content, token.line));
+      stack.add(new TemplateFragment(token.content, token.line));
     }
     else if (token is OpenIncludeToken) {
       _state = ParserStates.INCLUDE;
@@ -276,8 +276,6 @@ abstract class Fragment {
   
   Fragment(this._line);
   
-  abstract String toCode();
-  
 }
 
 /** An include */
@@ -291,25 +289,17 @@ class IncludeFragment extends Fragment {
   
          set include(String value) => _include = value;  
   
-  String toCode() {
-    return null;
-  }
-  
 }
 
 /** An plain fragment of template */
-class TextFragment extends Fragment {
+class TemplateFragment extends Fragment {
   
   String _text;
   
-  TextFragment(this._text, int line): super(line);
+  TemplateFragment(this._text, int line): super(line);
   
   String get text() => _text;
-  
-  String toCode() {
-    return null;
-  }
-  
+    
 }
 
 /** A fragment of code */
@@ -322,12 +312,7 @@ class CodeFragment extends Fragment {
   String get code() => _code;
   
          set code(String value) => _code = value; 
-  
-  
-  String toCode() {
-    return null;
-  }
-  
+    
 }
 
 /** An expression which value is html escaped before it appended to an output */
@@ -340,11 +325,7 @@ class EscapedOutputFragment extends Fragment {
   String get expression() => _expression;
   
          set expression(String value) => _expression = value; 
-  
-  String toCode() {
-    return null;
-  }
-  
+    
 }
 
 /** An expression which value is directly appended to an output */
@@ -357,11 +338,7 @@ class UnescapedOutputFragment extends Fragment {
   String get expression() => _expression;
   
          set expression(String value) => _expression = value;
-  
-  String toCode() {
-    return null;
-  }
-  
+    
 }
 
 /** Any available parser states */

@@ -4,5 +4,7 @@
 
 //An runtime library contains support classes that needed for execution 
 //the template at runtime
+//NOTE: this lib is designed to work in server environment
 #library("desntech:edt:runtime");
+#import("dart:io");
 #source("runtime/template.dart");

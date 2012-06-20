@@ -4,8 +4,11 @@
 
 #library("desntech:edt");
 #import("dart:io");
+#import("dart:uri");
+#import("lib/filenames.dart");
 #source("lib/args.dart");
 #source("lib/args_utils.dart");
 #source("lib/compiler.dart");
 #source("lib/parser.dart");
 #source("lib/scanner.dart");
+#source("lib/emitter.dart");

@@ -1,5 +1,6 @@
 test/parser_test.dart
 RuntimeLib.dart
+lib/filenames.dart
+edt.dart
 test/scanner_test.dart
-CompilerLib.dart
 Lib.dart
