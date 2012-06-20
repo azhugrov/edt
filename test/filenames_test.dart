@@ -13,6 +13,10 @@ void main() {
   });
   test("check join", () {
     var result = pathJoin(['/foo', 'bar', 'baz/asdf', 'quux', '..']);
-    print(result);
+    expect(result, equals(@"\foo\bar\baz\asdf"));
+  });
+  test("check basename", () {
+    var basename = pathBasename("C:\\foo\\bar\\baz\\asd\\quux.html", ".html");
+    expect(basename, equals("quux"));
   });
 }

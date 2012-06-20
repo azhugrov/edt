@@ -26,8 +26,8 @@
 #library('filenames');
 #import('dart:io');
 
-final RegExp SplitDeviceReWin = const RegExp(@"^([a-zA-Z]:|[\\\/]{2}[^\\\/]+[\\\/][^\\\/]+)?([\\\/])?([\s\S]*?)$");
-final RegExp SplitTailReWin = const RegExp(@"^([\s\S]+[\\\/](?!$)|[\\\/])?((?:[\s\S]+?)?(\.[^.]*)?)$");
+final RegExp SplitDeviceReWin = const RegExp(@"^([a-zA-Z]:|[\\/]{2}[^\\/]+[\\/][^\\/]+)?([\\/])?([\s\S]*?)$");
+final RegExp SplitTailReWin = const RegExp(@"^([\s\S]+[\\/](?!$)|[\\/])?((?:[\s\S]+?)?(\.[^.]*)?)$");
 final RegExp SplitPathRePosix = const RegExp(@"^(\/?)([\s\S]+\/(?!$)|\/)?((?:[\s\S]+?)?(\.[^.]*)?)$");
 
 /** 
@@ -62,6 +62,29 @@ List<String> _normalizeArray(List<String> parts, bool allowAboveRoot) {
   }
 
   return parts;
+}
+
+/** 
+ * Function to split a filename into [root, dir, basename, ext]
+ * windows version
+ */
+List<String> _splitPath(filename) {
+  bool isWindows = Platform.operatingSystem == 'windows';
+  if (isWindows) {
+    // Separate device+slash from tail
+    Match result = SplitDeviceReWin.firstMatch(filename);
+    String device = "${result.group(1) !== null ? result.group(1) : ''}${result.group(2) !== null ? result.group(2) : ''}";
+    String tail = result.group(3) !== null ? result.group(3) : '';
+    // Split the tail into dir, basename and extension
+    Match result2 = SplitTailReWin.firstMatch(tail);
+    String dir = result2.group(1) !== null ? result2.group(1) : '';
+    String basename = result2.group(2) !== null ? result2.group(2) : '';
+    String ext = result2.group(3) !== null ? result2.group(3) : '';
+    return [device, dir, basename, ext];
+  } 
+  else {
+    throw new Exception("not implemented for a given platform: ${Platform.operatingSystem}");  
+  }
 }
 
 String pathNormalize(String path) {
@@ -118,6 +141,15 @@ String pathJoin(List<String> paths) {
     //NOTE(zhuhrou) please implement this for other platforms
     throw new Exception("not implemented yet");
   }  
+}
+
+String pathBasename(String path, [String ext]) {
+  String basename = _splitPath(path)[2];
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext !== null && basename.substring(basename.length - ext.length) == ext) {
+    basename = basename.substring(0, basename.length - ext.length);
+  }
+  return basename;
 }
 
 String getCurrentDirectory() {

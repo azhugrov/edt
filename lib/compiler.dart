@@ -13,7 +13,7 @@ class Compiler {
   /** An template to compile */
   String _templateFile;
   /** A working directory */
-  Uri _cwd;
+  String _cwd;
   
   /** 
    * As dart does not support metaprogramming 
@@ -34,12 +34,12 @@ class Compiler {
   /** Compile a given template to output directory */
   void compile() {
     var buf = new StringBuffer();
-    _processTemplate(_cwd.resolve(_templateFile));
+    _processTemplate(pathJoin([_cwd, _templateFile]));
     _writeTemplate(uri, text);
   }
   
-  void _processTemplate(Uri templateUri) {
-    String templateSrc = _readTemplate(templateUri);
+  void _processTemplate(String templatePath) {
+    String templateSrc = _readTemplate(templatePath);
     List<Fragment> ast = parser.parse(templateSrc); //yes, this is not a tree in common sence
     
   }
@@ -53,16 +53,13 @@ class Compiler {
    * Reads file and returns its content. 
    * Yes we don't support async api at the moment 
    */
-  String _readTemplate(Uri uri) {
-    return (new File(uriPathToNative(uri.path))).readAsTextSync(Encoding.UTF_8);    
+  String _readTemplate(String templatePath) {
+    return new File(templatePath).readAsTextSync(Encoding.UTF_8);    
   }
   
   /** Writes compiled template to a file */
-  void _writeTemplate(Uri uri, String text) {
-    if (uri.scheme != 'file') {
-      fail('Error: Unhandled scheme ${uri.scheme}.');
-    }
-    var file = new File(uriPathToNative(uri.path)).openSync(FileMode.WRITE);
+  void _writeTemplate(String templatePath, String text) {
+    var file = new File(templatePath).openSync(FileMode.WRITE);
     file.writeStringSync(text, Encoding.UTF_8);
     file.closeSync();
   }
