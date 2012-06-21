@@ -30,15 +30,12 @@ class TemplateEmitterImpl implements TemplateEmitter {
   
   /** Emits start of class template with given name */
   String emitStartClass(String className) {
-    return """
-            class $className extends EDTemplate {
-
-              String render(Map data, OutputStream out) {
-           """;  
+    return "class $className extends EDTemplate {\n"
+           "  String render(Map data, OutputStream out) {\n";  
   }
   
   String emitTemplateFragment(TemplateFragment fragment) {
-    return "out.writeString(\"${fragment.text}\");\n";      
+    return "    out.writeString(\"${fragment.text}\");\n";      
   }
   
   String emitCodeFragment(CodeFragment fragment) {
@@ -46,19 +43,17 @@ class TemplateEmitterImpl implements TemplateEmitter {
   }
   
   String emitEscapedOutputFragment(EscapedOutputFragment fragment) {
-    return "out.writeString(_escapeHtml(${fragment.expression}));";
+    return "    out.writeString(_escapeHtml(${fragment.expression}));\n";
   }
   
   String emitUnescapedOutputFragment(UnescapedOutputFragment fragment) {
-    return "out.writeString(${fragment.expression});";
+    return "    out.writeString(${fragment.expression});\n";
   }
   
   /** Emits end of class template */
   String emitEndClass() {
-    return """
-              }
-            }
-           """;
+    return "  }\n"
+           "}\n";
   }
   
 }

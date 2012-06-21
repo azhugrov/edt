@@ -53,7 +53,7 @@ class Compiler {
   
   void _processTemplate(String templatePath, StringBuffer buf) {
     String templateSrc = _readTemplate(templatePath);
-    List<Fragment> ast = parser.parse(templateSrc); //yes, this is not a tree in common sence
+    List<Fragment> ast = parser.parse(templateSrc); //yes, this is not a tree in a common sence
     Iterator<Fragment> astIterator = ast.iterator();
     while (astIterator.hasNext()) {
       Fragment fragment = astIterator.next();
@@ -77,7 +77,7 @@ class Compiler {
   
   /** Transform to a template class name */
   String _toClassName(String templatePath) {
-    return templatePath.replaceAll(const RegExp(@"[\\/]+"), "_");
+    return templatePath.replaceAll(const RegExp(@"[\\/\.]+"), "_");
   }
   
   /** 
