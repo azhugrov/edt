@@ -1,12 +1,12 @@
 // Copyright (c) 2012, the EDT project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-/** compiles and read templates */
+/** Compiles templates to a dart class */
 class Compiler {
   /** A base template parser implementation */
-  final Parser parser = new Parser();
+  Parser parser;
   /** A base emitter implementation */
-  final TemplateEmitter emitter = new TemplateEmitter();
+  TemplateEmitter emitter;
     
   /** Dir for compile output */
   String _outDirectory;
@@ -20,6 +20,8 @@ class Compiler {
    * we should precompile templates for now 
    */
   Compiler(Options options) {
+    parser = new Parser();
+    emitter = new TemplateEmitter();
     var argsParser = new ArgParser();
     //path to template
     //path to output directory
@@ -27,8 +29,16 @@ class Compiler {
     argsParser.addOption("out");
     var cmd = argsParser.parse(options.arguments);
     _outDirectory = cmd["out"];
+    print("out: $_outDirectory");
     _templateFile = cmd["file"];
+    print("file: $_templateFile");
     _cwd = getCurrentDirectory();
+    if (_outDirectory == null) {
+      throw new Exception("out dir should be provided");      
+    }
+    if (_templateFile == null) {
+      throw new Exception("template file should be provided");      
+    }
   }
   
   /** Compile a given template to output directory */
@@ -37,7 +47,8 @@ class Compiler {
     buf.add(emitter.emitStartClass(_toClassName(_templateFile)));
     _processTemplate(pathJoin([_cwd, _templateFile]), buf);
     buf.add(emitter.emitEndClass());
-    _writeTemplate("${pathBasename(_templateFile, ".edt")}.dart", buf.toString());
+    var outputFile = pathJoin([_cwd, _outDirectory, "${pathBasename(_templateFile, ".edt")}.dart"]);
+    _writeTemplate(outputFile, buf.toString());
   }
   
   void _processTemplate(String templatePath, StringBuffer buf) {

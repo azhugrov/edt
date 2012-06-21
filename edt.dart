@@ -6,6 +6,6 @@
 #import("Lib.dart");
 
 void main() {
-  //not implemented yet
-  print("test");
+  var compiler = new Compiler(new Options());
+  compiler.compile();
 }

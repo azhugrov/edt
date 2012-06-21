@@ -10,4 +10,4 @@ if %SCRIPTPATH:~-1%== set SCRIPTPATH=%SCRIPTPATH:~0,-1%
 
 set arguments=%*
 
-"%SCRIPTPATH%dart.exe" --heap_growth_rate=32 --allow_string_plus=false "%SCRIPTPATH%..\edt.dart" %arguments%
+dart --heap_growth_rate=32 --allow_string_plus=false "%SCRIPTPATH%..\edt.dart" %arguments%
