@@ -3,8 +3,6 @@
 // BSD-style license that can be found in the LICENSE file.
 /** Compiles templates to a dart class */
 class Compiler {
-  /** A base template parser implementation */
-  Parser parser;
   /** A base emitter implementation */
   TemplateEmitter emitter;
     
@@ -20,7 +18,6 @@ class Compiler {
    * we should precompile templates for now 
    */
   Compiler(Options options) {
-    parser = new Parser();
     emitter = new TemplateEmitter();
     var argsParser = new ArgParser();
     //path to template
@@ -55,7 +52,7 @@ class Compiler {
     String templateSrc = _readTemplate(templatePath);
     List<Fragment> ast;
     try {
-      ast = parser.parse(templateSrc);
+      ast = new Parser().parse(templateSrc);
     } catch(ParseException e) {
       print("could not parse: $templatePath");
       throw e;
