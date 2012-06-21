@@ -5,7 +5,7 @@
 #import("dart:io");
 #import("../lib/filenames.dart");
 //yes, it sucks. you need define your path in order to run this test
-#import("../../side-projects/dart/dart-sdk/lib/unittest/unittest.dart");
+#import("../../dart/dart-sdk/lib/unittest/unittest.dart");
 
 void main() {
   bool isWindows = Platform.operatingSystem == 'windows';
@@ -24,7 +24,7 @@ void main() {
     });
     test("check dirname", () {
       var dirname = pathDirname("C:\\foo\\bar\\baz\\asd\\quux.html");
-      print("dirname: $dirname");
+      expect(dirname, equals("C:\\foo\\bar\\baz\\asd"));
     });
   } 
   else {

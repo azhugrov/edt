@@ -53,7 +53,13 @@ class Compiler {
   
   void _processTemplate(String templatePath, StringBuffer buf) {
     String templateSrc = _readTemplate(templatePath);
-    List<Fragment> ast = parser.parse(templateSrc); //yes, this is not a tree in a common sence
+    List<Fragment> ast;
+    try {
+      ast = parser.parse(templateSrc);
+    } catch(ParseException e) {
+      print("could not parse: $templatePath");
+      throw e;
+    }
     Iterator<Fragment> astIterator = ast.iterator();
     while (astIterator.hasNext()) {
       Fragment fragment = astIterator.next();
@@ -70,7 +76,7 @@ class Compiler {
         buf.add(emitter.emitUnescapedOutputFragment(fragment));        
       }
       else if (fragment is IncludeFragment) {
-        _processTemplate(pathJoin([_cwd, _templateFile, fragment.include.trim()]), buf);        
+        _processTemplate(pathJoin([_cwd, pathDirname(_templateFile), fragment.include.trim()]), buf);        
       }
     }        
   }

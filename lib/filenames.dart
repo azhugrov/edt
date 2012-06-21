@@ -154,7 +154,6 @@ String pathJoin(List<String> paths) {
     if (const RegExp(@"^[\\/]{2}").hasMatch(joined) && !(const RegExp(@"^[\\/]{2}").hasMatch(paths[0]))) {
       joined = joined.substring(1);
     }
-    print("joined: $joined");
     return pathNormalize(joined);      
   } else {
     List<String> filteredPaths = paths.filter((p) => p != "");
@@ -182,7 +181,6 @@ String pathDirname(String path) {
     return '.';
   }
   
-  print("check if dir has trailing slash: $dir");
   if (dir != "") {
     // It has a dirname, strip trailing slash
     dir = dir.substring(0, dir.length - 1);
