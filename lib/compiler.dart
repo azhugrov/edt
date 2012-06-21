@@ -70,7 +70,7 @@ class Compiler {
         buf.add(emitter.emitUnescapedOutputFragment(fragment));        
       }
       else if (fragment is IncludeFragment) {
-        _processTemplate(pathJoin([_cwd, _templateFile, fragment.include]), buf);        
+        _processTemplate(pathJoin([_cwd, _templateFile, fragment.include.trim()]), buf);        
       }
     }        
   }

@@ -1,0 +1,5 @@
+<div>
+	<span>Include content</span>
+	<span>{{=data["third"]}}</span>
+	<span>{{-data["forth"]}}</span>
+</div>

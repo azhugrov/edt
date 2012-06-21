@@ -1,1 +1,14 @@
-This is example of emdedded dart templates
+<html>
+ <head>
+ 	<title>A sample template</title>
+ <head>
+ <body>
+ 	{{> include.edt }}
+ 	<div>
+ 	   {{ if (data("condition")) { }}
+ 	   		<span>{{=data["one"]}}</span>
+ 	   		<span>{{-data["second"]}}</span>
+ 	   {{ } }} 	
+ 	</div>
+ </body>
+</html>

@@ -171,6 +171,28 @@ String pathBasename(String path, [String ext]) {
   return basename;
 }
 
+/** Directory for a given path */
+String pathDirname(String path) {
+  List<String> result = _splitPath(path);
+  String root = result[0];
+  String dir = result[1];
+
+  if (root == "" && dir == "") {
+    // No dirname whatsoever
+    return '.';
+  }
+  
+  print("check if dir has trailing slash: $dir");
+  if (dir != "") {
+    // It has a dirname, strip trailing slash
+    dir = dir.substring(0, dir.length - 1);
+  }
+
+  return new StringBuffer().add(root)
+                           .add(dir)
+                           .toString();   
+}
+
 String getCurrentDirectory() {
   return new File('.').fullPathSync();
 }

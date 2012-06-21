@@ -4,4 +4,5 @@ lib/filenames.dart
 edt.dart
 test/filenames_test.dart
 test/scanner_test.dart
+test/example_test.dart
 Lib.dart

@@ -22,6 +22,10 @@ void main() {
       var basename = pathBasename("C:\\foo\\bar\\baz\\asd\\quux.html", ".html");
       expect(basename, equals("quux"));
     });
+    test("check dirname", () {
+      var dirname = pathDirname("C:\\foo\\bar\\baz\\asd\\quux.html");
+      print("dirname: $dirname");
+    });
   } 
   else {
     test("check normalize", () {
