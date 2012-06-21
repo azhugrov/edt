@@ -7,7 +7,7 @@
 #import("../RuntimeLib.dart");
 //yes, it sucks. you need define your path in order to run this test
 #import("../../dart/dart-sdk/lib/unittest/unittest.dart");
-
+#source("example.dart");
 
 void main() {
   test("simple case", () {
@@ -15,9 +15,58 @@ void main() {
       "one":    "one value",
       "second": "second value",
       "third":  "third value",
-      "forth":  "forth value"
+      "forth":  "forth value",
+      "condition": true
     };
-    
+    var out = new StringOutputStream();
+    var template = new _test_example_edt();
+    template.render(data, out);
+    print(out.toString());    
   });  
 }
 
+/** Mock implementation for tests */
+class StringOutputStream implements OutputStream {
+  
+  StringBuffer _buf;
+  
+  StringOutputStream() {
+    _buf = new StringBuffer();
+  }
+  
+  bool write(List<int> buffer, [bool copyBuffer]) {
+    throw new UnsupportedOperationException("Not Implemented");
+  }
+
+  bool writeFrom(List<int> buffer, [int offset, int len]) {
+    throw new UnsupportedOperationException("Not Implemented");
+  }
+
+  bool writeString(String string, [Encoding encoding]) {
+    _buf.add(string);
+  }
+
+  void flush() {}
+
+  void close() {}
+
+  void destroy() {
+    throw new UnsupportedOperationException("Not Implemented");
+  }
+
+  void set onNoPendingWrites(void callback()) {
+    throw new UnsupportedOperationException("Not Implemented");
+  }
+
+  void set onClosed(void callback()) {
+    throw new UnsupportedOperationException("Not Implemented");
+  }
+
+  void set onError(void callback(e)) {
+    throw new UnsupportedOperationException("Not Implemented");
+  }
+  
+  String toString() {
+    return _buf.toString();
+  }  
+}

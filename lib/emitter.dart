@@ -35,15 +35,17 @@ class TemplateEmitterImpl implements TemplateEmitter {
   }
   
   String emitTemplateFragment(TemplateFragment fragment) {
-    return "    out.writeString(\"${fragment.text}\");\n";      
+    var text = fragment.text.replaceAll("\n", "\\n")
+                            .replaceAll("\r", "\\r");
+    return "    out.writeString(\"${text}\");\n";      
   }
   
   String emitCodeFragment(CodeFragment fragment) {
-    return fragment.code;
+    return "${fragment.code}\n";
   }
   
   String emitEscapedOutputFragment(EscapedOutputFragment fragment) {
-    return "    out.writeString(_escapeHtml(${fragment.expression}));\n";
+    return "    out.writeString(escapeHtml(${fragment.expression}));\n";
   }
   
   String emitUnescapedOutputFragment(UnescapedOutputFragment fragment) {

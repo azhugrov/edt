@@ -5,7 +5,7 @@
  <body>
  	{{> include.edt }}
  	<div>
- 	   {{ if (data("condition")) { }}
+ 	   {{ if (data["condition"]) { }}
  	   		<span>{{=data["one"]}}</span>
  	   		<span>{{-data["second"]}}</span>
  	   {{ } }} 	

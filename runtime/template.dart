@@ -8,7 +8,7 @@ abstract class EDTemplate {
   abstract String render(Map data, OutputStream out);
   
   /** Utility function used to escape html */
-  String _escapeHtml(Object obj) {
+  String escapeHtml(Object obj) {
     return obj.toString()
         .replaceAll('&', '&amp;')
         .replaceAll('>', '&gt;')
