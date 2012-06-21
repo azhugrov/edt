@@ -34,19 +34,39 @@ class Compiler {
   /** Compile a given template to output directory */
   void compile() {
     var buf = new StringBuffer();
-    _processTemplate(pathJoin([_cwd, _templateFile]));
-    _writeTemplate(uri, text);
+    buf.add(emitter.emitStartClass(_toClassName(_templateFile)));
+    _processTemplate(pathJoin([_cwd, _templateFile]), buf);
+    buf.add(emitter.emitEndClass());
+    _writeTemplate("${pathBasename(_templateFile, ".edt")}.dart", buf.toString());
   }
   
-  void _processTemplate(String templatePath) {
+  void _processTemplate(String templatePath, StringBuffer buf) {
     String templateSrc = _readTemplate(templatePath);
     List<Fragment> ast = parser.parse(templateSrc); //yes, this is not a tree in common sence
-    
+    Iterator<Fragment> astIterator = ast.iterator();
+    while (astIterator.hasNext()) {
+      Fragment fragment = astIterator.next();
+      if (fragment is TemplateFragment) {
+        buf.add(emitter.emitTemplateFragment(fragment));        
+      }
+      else if (fragment is CodeFragment) {
+        buf.add(emitter.emitCodeFragment(fragment));        
+      }
+      else if (fragment is EscapedOutputFragment) {
+        buf.add(emitter.emitEscapedOutputFragment(fragment));        
+      }
+      else if (fragment is UnescapedOutputFragment) {
+        buf.add(emitter.emitUnescapedOutputFragment(fragment));        
+      }
+      else if (fragment is IncludeFragment) {
+        _processTemplate(pathJoin([_cwd, _templateFile, fragment.include]), buf);        
+      }
+    }        
   }
   
-  //TODO(zhuhrou) - decide if we need this method
-  void _processInclude(String include) {
-    
+  /** Transform to a template class name */
+  String _toClassName(String templatePath) {
+    return templatePath.replaceAll(const RegExp(@"[\\/]+"), "_");
   }
   
   /** 
@@ -62,6 +82,5 @@ class Compiler {
     var file = new File(templatePath).openSync(FileMode.WRITE);
     file.writeStringSync(text, Encoding.UTF_8);
     file.closeSync();
-  }
-  
+  }  
 }

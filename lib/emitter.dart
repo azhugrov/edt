@@ -42,15 +42,15 @@ class TemplateEmitterImpl implements TemplateEmitter {
   }
   
   String emitCodeFragment(CodeFragment fragment) {
-    return null;
+    return fragment.code;
   }
   
   String emitEscapedOutputFragment(EscapedOutputFragment fragment) {
-    return null;
+    return "out.writeString(_escapeHtml(${fragment.expression}));";
   }
   
   String emitUnescapedOutputFragment(UnescapedOutputFragment fragment) {
-    return null;
+    return "out.writeString(${fragment.expression});";
   }
   
   /** Emits end of class template */
@@ -61,11 +61,4 @@ class TemplateEmitterImpl implements TemplateEmitter {
            """;
   }
   
-}
-
-/** todo zhugrov a - decide if we ever need this class */
-class Namer {
-  String className(String template) {
-    
-  }  
 }
