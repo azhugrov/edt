@@ -24,7 +24,9 @@ Embedded Dart Templates
   * Currently templates should be UTF-8 encoded.
 
 ##Compiler options
---out=dir_path - path to an output directory => for example ../test
---file=file_path - path to the template file => for example ../test/example.edt
+  * --out=dir_path - path to an output directory => for example ../test
+  * --file=file_path - path to the template file => for example ../test/example.edt
+Be aware that currently we do not support absolute paths as the compiler parameter. 
+All path should be relative to a worker directory.
 
 An example of the syntax could be found in the test folder.

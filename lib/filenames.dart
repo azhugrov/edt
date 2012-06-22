@@ -191,6 +191,11 @@ String pathDirname(String path) {
                            .toString();   
 }
 
+/** Gets a path extensions */
+String pathExtname(String path) {
+  return _splitPath(path)[3];
+}
+
 String getCurrentDirectory() {
   return new File('.').fullPathSync();
 }

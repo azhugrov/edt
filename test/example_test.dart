@@ -19,7 +19,7 @@ void main() {
       "condition": true
     };
     var out = new StringOutputStream();
-    var template = new _test_example_edt();
+    var template = new test_example_edt();
     template.render(data, out);
     print(out.toString());    
   });  

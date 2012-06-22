@@ -7,5 +7,5 @@
 
 void main() {
   var compiler = new Compiler(new Options());
-  compiler.compile();
+  compiler.compile(); 
 }

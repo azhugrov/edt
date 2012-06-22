@@ -10,6 +10,8 @@ class Compiler {
   String _outDirectory;
   /** An template to compile */
   String _templateFile;
+  /** A source dir to look for templates */
+  String _srcDir;
   /** A working directory */
   String _cwd;
   
@@ -24,27 +26,65 @@ class Compiler {
     //path to output directory
     argsParser.addOption("file");
     argsParser.addOption("out");
+    argsParser.addOption("src");
     var cmd = argsParser.parse(options.arguments);
     _outDirectory = cmd["out"];
-    print("out: $_outDirectory");
     _templateFile = cmd["file"];
-    print("file: $_templateFile");
+    _srcDir = cmd["src"];    
     _cwd = getCurrentDirectory();
     if (_outDirectory == null) {
       throw new Exception("out dir should be provided");      
     }
-    if (_templateFile == null) {
-      throw new Exception("template file should be provided");      
+    if (_templateFile == null && _srcDir == null) {
+      throw new Exception("either source dir or template file should be provided");      
     }
   }
   
   /** Compile a given template to output directory */
   void compile() {
+    if (_templateFile !== null) {
+      _compileFile(pathJoin([_cwd, templateFile]), pathJoin([_cwd, _outDirectory]));      
+    } 
+    else {
+      //process dir
+      _compileFolder(pathJoin([_cwd, _srcDir]), pathJoin([_cwd, _outDirectory]));
+    }
+  }
+  
+  /** 
+    * Compiles all files in a given folder 
+    * [srcDir] source directory (absolute path)
+    * [outDir] corresponding output directory (absolute path)
+    */
+  void _compileFolder(String srcDir, String outDir) {
+    Directory subDir = new Directory(srcDir);
+    DirectoryLister dirWalker = subDir.list(false);
+    dirWalker.onFile = onFile(String filePath) {
+       if (pathExtname(filePath) == ".edt") {
+         print("found a template file: $filePath");
+         _compileFile(filePath, outDir);
+       }
+    };
+    //Handles other directories
+    dirWalker.onDir = onDir(String subDirPath) {
+       //check if are given dir exist for output
+       String subDirName = pathBasename(subDirPath);
+       print("subDirName: $subDirName");
+       var outSubDirectory = new Directory(pathJoin([outDir, subDirName]));
+       if (!outSubDirectory.existsSync()) {
+         print("create an output subdirectory: ${outSubDirectory.path}");
+         outSubDirectory.createSync();         
+       }
+       _compileFolder(subDirPath, outSubDirectory.path);
+    }; 
+  }
+  
+  void _compileFile(String templateFile, String outDir) {
     var buf = new StringBuffer();
-    buf.add(emitter.emitStartClass(_toClassName(_templateFile)));
-    _processTemplate(pathJoin([_cwd, _templateFile]), buf);
+    buf.add(emitter.emitStartClass(_toClassName(templateFile)));
+    _processTemplate(templateFile, buf);      
     buf.add(emitter.emitEndClass());
-    var outputFile = pathJoin([_cwd, _outDirectory, "${pathBasename(_templateFile, ".edt")}.dart"]);
+    String outputFile = pathJoin([outDir, "${pathBasename(templateFile, ".edt")}.dart"]);
     _writeTemplate(outputFile, buf.toString());
   }
   
@@ -72,15 +112,16 @@ class Compiler {
       else if (fragment is UnescapedOutputFragment) {
         buf.add(emitter.emitUnescapedOutputFragment(fragment));        
       }
-      else if (fragment is IncludeFragment) {
-        _processTemplate(pathJoin([_cwd, pathDirname(_templateFile), fragment.include.trim()]), buf);        
+      else if (fragment is IncludeFragment) { 
+        String includePath = pathJoin([pathDirname(templatePath), fragment.include.trim()]);          
+         _processTemplate(includePath, buf);        
       }
     }        
   }
   
   /** Transform to a template class name */
   String _toClassName(String templatePath) {
-    return templatePath.replaceAll(const RegExp(@"[\\/\.]+"), "_");
+    return templatePath.replaceAll(const RegExp(@"[\\/\.:]+"), "_");
   }
   
   /** 
@@ -96,5 +137,21 @@ class Compiler {
     var file = new File(templatePath).openSync(FileMode.WRITE);
     file.writeStringSync(text, Encoding.UTF_8);
     file.closeSync();
-  }  
+  }
+  
+  /** We assume that srcFile is localed inside of srcDir */
+  String _relativeSourcePath(String srcDir, String srcFile) {
+    bool isWindows = Platform.operatingSystem == 'windows';
+    if (isWindows) {
+      String normalizedDir = pathNormalize(srcDir);
+      String normalizedFile = pathNormalize(srcFile);
+      if (!normalizedFile.startsWith(normalizedDir)) {
+        throw new IllegalArgumentException("srcDir=$srcDir;srcFile=$srcFile");  
+      }
+      return pathDirname(normalizedFile.substring(normalizedDir.length));
+    }
+    else {
+      throw new Exception("Not supported on this operational system: ${Platform.operatingSystem}");
+    }
+  }
 }
