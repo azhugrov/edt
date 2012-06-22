@@ -26,6 +26,7 @@ Embedded Dart Templates
 ##Compiler options
   * --out=dir_path - path to an output directory => for example ../test
   * --file=file_path - path to the template file => for example ../test/example.edt
+  * --src=dir_path - path to an source directory where lookup for template files => for example ../src
 Be aware that currently we do not support absolute paths as the compiler parameter. 
 All path should be relative to a worker directory.
 
