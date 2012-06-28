@@ -21,7 +21,7 @@ class ScannerImpl implements Scanner {
     List<Token> tokens = <Token>[];
     //note that text token could be multiline
     var textTokenBuf = new StringBuffer();
-    for (var lineNumber = 1; lineNumber <= _lines.length; lineNumber++) {
+    for (int lineNumber = 1; lineNumber <= _lines.length; lineNumber++) {
       var line = _lines[lineNumber - 1];
       var buf = new Queue<String>();
       var i = 0;
@@ -36,43 +36,33 @@ class ScannerImpl implements Scanner {
           //ready for analysis
           String token = _concatAll(buf);
           if (token.startsWith(Tokens.OPEN_INCLUDE)) {
-            if (!textTokenBuf.isEmpty()) {
-              tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
-              textTokenBuf.clear();
-            }
+            _fillBuferredTextToken(tokens, textTokenBuf, lineNumber);
             tokens.add(new OpenIncludeToken(lineNumber));
             buf.clear();
           } 
           else if (token.startsWith(Tokens.OPEN_EXPRESSION)) {
-            if (!textTokenBuf.isEmpty()) {
-              tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
-              textTokenBuf.clear();
-            }
+            _fillBuferredTextToken(tokens, textTokenBuf, lineNumber);
             tokens.add(new OpenExpressionToken(lineNumber));
             buf.clear();
           }
           else if (token.startsWith(Tokens.OPEN_UNESCAPED_EXPRESSION)) {
-            if (!textTokenBuf.isEmpty()) {
-              tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
-              textTokenBuf.clear();
-            }
+            _fillBuferredTextToken(tokens, textTokenBuf, lineNumber);
             tokens.add(new OpenUnescapedExpressionToken(lineNumber));
+            buf.clear();            
+          } 
+          else if (token.startsWith(Tokens.OPEN_LAYOUT)) {
+            _fillBuferredTextToken(tokens, textTokenBuf, lineNumber);
+            tokens.add(new OpenLayoutToken(lineNumber));
             buf.clear();            
           }          
           else if (token.startsWith(Tokens.OPEN_CODE)) {
-            if (!textTokenBuf.isEmpty()) {
-              tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
-              textTokenBuf.clear();
-            }
+            _fillBuferredTextToken(tokens, textTokenBuf, lineNumber);
             tokens.add(new OpenCodeToken(lineNumber));
             buf.removeFirst();
             buf.removeFirst();           
           }
           else if (token.startsWith(Tokens.CLOSE)) {
-            if (!textTokenBuf.isEmpty()) {
-              tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
-              textTokenBuf.clear();
-            }
+            _fillBuferredTextToken(tokens, textTokenBuf, lineNumber);
             tokens.add(new CloseToken(lineNumber));
             buf.removeFirst();
             buf.removeFirst();
@@ -80,7 +70,7 @@ class ScannerImpl implements Scanner {
           else {
             //the buffer input does not correspond any predefined term
             //may be empty if we parse an empty line
-            if (!buf.isEmpty()) textTokenBuf.add(buf.removeFirst());              
+            if (!buf.isEmpty()) textTokenBuf.add(buf.removeFirst());             
           }
           
           if (i == line.length) {
@@ -99,6 +89,13 @@ class ScannerImpl implements Scanner {
     return tokens;
   }
   
+  void _fillBuferredTextToken(List<Token> tokens, StringBuffer textTokenBuf, int lineNumber) {
+     if (!textTokenBuf.isEmpty()) {
+       tokens.add(new TextToken(textTokenBuf.toString(), lineNumber));
+       textTokenBuf.clear();
+     }    
+  }
+  
   String _concatAll(Queue<String> buf) {
     StringBuffer result = new StringBuffer();
     buf.forEach((String char) {
@@ -112,6 +109,7 @@ class ScannerImpl implements Scanner {
 
 /** A list of predefined tokens */
 class Tokens {
+  static final String OPEN_LAYOUT = "{{~";
   static final String OPEN_INCLUDE = "{{>";
   static final String OPEN_CODE = "{{";
   static final String OPEN_EXPRESSION = "{{=";
@@ -126,6 +124,16 @@ abstract class Token {
   Token(this._line);
   
   int get line() => _line;
+  
+}
+
+class OpenLayoutToken extends Token {
+  
+  OpenLayoutToken(int line): super(line);
+  
+  String toString() {
+    return "OpenLayoutToken[line=${line}]";
+  }
   
 }
 

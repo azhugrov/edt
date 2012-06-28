@@ -1,8 +1,7 @@
-<html>
- <head>
- 	<title>A sample template</title>
- <head>
- <body>
+{{~ layout.edt }}
+{{~ title}}
+    Here a title content
+{{~ content}}
  	{{> include.edt }}
  	<div>
  	   {{ if (data["condition"]) { }}
@@ -10,5 +9,3 @@
  	   		<span>{{-data["second"]}}</span>
  	   {{ } }} 	
  	</div>
- </body>
-</html>

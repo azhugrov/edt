@@ -9,14 +9,16 @@
 
 void main() {
   test("simple case", () {
-    var unparsedText = ['This is a simple but unparsed text \n',
+    var unparsedText = ['{{~ layout.edt }}\n',
+                        'This is a simple but unparsed text \n',
                        'which we would use {{>a include content}}\n',
                        '{{code fragment}} this should not {{=expression}} affect\n',
                        'what we do here {{- do you understand me}}\n',
                        'and finally this is our last line'];
     var scanner = new Scanner(unparsedText);
     var tokens = scanner.tokenize();
-    expect(tokens.length, equals(17));               
+    printTokens(tokens);
+    expect(tokens.length, equals(20));               
   });  
 }
 
