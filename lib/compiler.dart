@@ -90,29 +90,29 @@ class Compiler {
   
   void _processTemplate(String templatePath, StringBuffer buf) {
     String templateSrc = _readTemplate(templatePath);
-    List<Fragment> ast;
+    List<Node> ast;
     try {
       ast = new Parser().parse(templateSrc);
     } catch(ParseException e) {
       print("could not parse: $templatePath");
       throw e;
     }
-    Iterator<Fragment> astIterator = ast.iterator();
+    Iterator<Node> astIterator = ast.iterator();
     while (astIterator.hasNext()) {
-      Fragment fragment = astIterator.next();
-      if (fragment is TemplateFragment) {
+      Node fragment = astIterator.next();
+      if (fragment is TextNode) {
         buf.add(emitter.emitTemplateFragment(fragment));        
       }
-      else if (fragment is CodeFragment) {
+      else if (fragment is CodeNode) {
         buf.add(emitter.emitCodeFragment(fragment));        
       }
       else if (fragment is EscapedOutputFragment) {
         buf.add(emitter.emitEscapedOutputFragment(fragment));        
       }
-      else if (fragment is UnescapedOutputFragment) {
+      else if (fragment is UnescapedOutputNode) {
         buf.add(emitter.emitUnescapedOutputFragment(fragment));        
       }
-      else if (fragment is IncludeFragment) { 
+      else if (fragment is IncludeNode) { 
         String includePath = pathJoin([pathDirname(templatePath), fragment.include.trim()]);          
          _processTemplate(includePath, buf);        
       }

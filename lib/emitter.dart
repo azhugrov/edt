@@ -10,13 +10,13 @@ interface TemplateEmitter default TemplateEmitterImpl {
   /** Emits start of class template with given name */
   String emitStartClass(String className);
   
-  String emitTemplateFragment(TemplateFragment fragment);
+  String emitTemplateFragment(TemplateNode fragment);
   
   String emitCodeFragment(CodeFragment fragment);
   
   String emitEscapedOutputFragment(EscapedOutputFragment fragment);
   
-  String emitUnescapedOutputFragment(UnescapedOutputFragment fragment);
+  String emitUnescapedOutputFragment(UnescapedOutputNode fragment);
   
   /** Emits end of class template */
   String emitEndClass();
@@ -35,7 +35,7 @@ class TemplateEmitterImpl implements TemplateEmitter {
            "  String render(Map data, OutputStream out) {\n";  
   }
   
-  String emitTemplateFragment(TemplateFragment fragment) {
+  String emitTemplateFragment(TemplateNode fragment) {
     var text = fragment.text.replaceAll("\n", "\\n")
                             .replaceAll("\r", "\\r")
                             .replaceAll("\"", "\\\"");
@@ -50,7 +50,7 @@ class TemplateEmitterImpl implements TemplateEmitter {
     return "    out.writeString(escapeHtml(${fragment.expression}));\n";
   }
   
-  String emitUnescapedOutputFragment(UnescapedOutputFragment fragment) {
+  String emitUnescapedOutputFragment(UnescapedOutputNode fragment) {
     return "    out.writeString(${fragment.expression});\n";
   }
   

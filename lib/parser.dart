@@ -7,7 +7,7 @@ interface Parser default ParserImpl {
   Parser();
   
   /** Parses a given template text */
-  List<Fragment> parse(String src);  
+  TemplateNode parse(String src);  
   
 }
 
@@ -17,69 +17,142 @@ class ParserImpl implements Parser {
   static final int NEW_LINE_CODE = 10;
   
   /** the current parser state */
-  int _state = ParserStates.UNKNOWN;
+  int _state = ParserStates.TEMPLATE_START;
   
-  ParserImpl() {}
+  Queue<ContainerNode> _stack;
   
-  List<Fragment> parse(String src) {
-    var parsed = <Fragment>[];
+  ParserImpl() {
+    _stack = new Queue<ContainerNode>();
+  }
+  
+  TemplateNode parse(String src, [bool isLayout=false]) {
+    var parsed = <Node>[];
     var lines = _toLines(src);
     var scanner = new Scanner(lines);
-    return _processTokenStream(scanner.tokenize());   
+    return _processTokenStream(scanner.tokenize(), isLayout);   
   }
   
   /** Process a token stream */
-  List<Fragment> _processTokenStream(List<Token> tokens) {
+  TemplateNode _processTokenStream(List<Token> tokens, bool isLayout) {
     Iterator<Token> tokenIterator = tokens.iterator();
-    Queue<Fragment> stack = new Queue<Fragment>();
+    TemplateNode template = new TemplateNode(isLayout);
+    _stack.add(template);
     while (tokenIterator.hasNext()) {
       Token token = tokenIterator.next();
       switch (_state) {
-        case ParserStates.UNKNOWN:
-          _processTokenInUnknownState(token, stack);
+        case ParserStates.TEMPLATE_START:
+          _processTokenInTemplateStartState(token);
+          break;        
+        case ParserStates.WAITING_FOR_NEXT_TAG:
+          _processTokenInWaitingForNextTagState(token);
           break;
-        case ParserStates.TEMPLATE:
-          _processTokenInTemplateState(token, stack);
+        case ParserStates.TEXT:
+          _processTokenInTextState(token);
           break;
+        case ParserStates.LAYOUT_DECLARATION:
+          _processTokenInLayoutDeclarationState(token);
+          break;
+        case ParserStates.SECTION_DEFINITION:
+          _processTokenInSectionDefinitionState(token);
+          break;
+        case ParserStates.SECTION_REFERENCE:
+          _processTokenInSectionReferenceState(token);
+          break;          
         case ParserStates.INCLUDE:
-          _processTokenInIncludeState(token, stack);
+          _processTokenInIncludeState(token);
           break;
         case ParserStates.CODE:
-          _processTokenInCodeState(token, stack);
+          _processTokenInCodeState(token);
           break;
         case ParserStates.ESCAPED_EXPRESSION:
-          _processTokenInEscapedExpressionState(token, stack);
+          _processTokenInEscapedExpressionState(token);
           break;
         case ParserStates.UNESCAPED_EXPRESSION:
-          _processTokenInUnescapedExpressionState(token, stack);
+          _processTokenInUnescapedExpressionState(token);
           break;
         default:
           throw new Exception("Illegal state: $_state");
       }
     }
-    return _toList(stack);    
+    return template;    
   }
   
-  void _processTokenInUnknownState(Token token, Queue<Fragment> stack) {
+  void _processTokenInTemplateStartState(Token token) {
+    TemplateNode template = _stack.last();
     if (token is TextToken) {
-      _state = ParserStates.TEMPLATE;
-      stack.add(new TemplateFragment(token.content, token.line));
+      _state = ParserStates.TEXT; 
+      template.add(new TextNode(token.content, token.line));
+    }
+    else if (token is OpenLayoutToken) {
+      if (template.isLayout) {
+        _state = ParserStates.SECTION_REFERENCE;
+        template.add(new SectionReferenceNode(token.line));
+      }
+      else {
+        _state = ParserStates.LAYOUT_DECLARATION;
+        template.layout = new LayoutDeclarationNode(token.line);
+      }
     }
     else if (token is OpenIncludeToken) {
       _state = ParserStates.INCLUDE;
-      stack.add(new IncludeFragment(token.line));
+      template.add(new IncludeNode(token.line));
     }
     else if (token is OpenCodeToken) {
       _state = ParserStates.CODE;
-      stack.add(new CodeFragment(token.line));      
+      template.add(new CodeNode(token.line));
     }
     else if (token is OpenExpressionToken) {
       _state = ParserStates.ESCAPED_EXPRESSION;
-      stack.add(new EscapedOutputFragment(token.line));
+      template.add(new EscapedOutputNode(token.line));      
     }
     else if (token is OpenUnescapedExpressionToken) {
       _state = ParserStates.UNESCAPED_EXPRESSION;
-      stack.add(new UnescapedOutputFragment(token.line));
+      template.add(new UnescapedOutputNode(token.line));      
+    }
+    else if (token is CloseToken) {
+      throw new ParseException(token.line, token);      
+    }
+    else {
+      throw new IllegalArgumentException(token);
+    }
+  } 
+  
+  void _processTokenInWaitingForNextTagState(Token token) {
+    ContainerNode container = _stack.last();
+    if (token is TextToken) {
+      _state = ParserStates.TEXT;
+      container.add(new TextNode(token.content, token.line));
+    }
+    else if (token is OpenLayoutToken) {
+      if ((_stack.first() as TemplateNode).isLayout) {
+        _state = ParserStates.SECTION_REFERENCE;
+        container.add(new SectionReferenceNode(token.line));
+      }
+      else {
+        _state = ParserStates.SECTION_DEFINITION;
+        if (container is SectionDefinitionNode) {
+          _stack.removeLast();          
+        }
+        var sectionDefinition = new SectionDefinitionNode(token.line);
+        _stack.last().add(sectionDefinition);
+        _stack.add(sectionDefinition);
+      }
+    }    
+    else if (token is OpenIncludeToken) {
+      _state = ParserStates.INCLUDE;
+      container.add(new IncludeNode(token.line));
+    }
+    else if (token is OpenCodeToken) {
+      _state = ParserStates.CODE;
+      container.add(new CodeNode(token.line));      
+    }
+    else if (token is OpenExpressionToken) {
+      _state = ParserStates.ESCAPED_EXPRESSION;
+      container.add(new EscapedOutputNode(token.line));
+    }
+    else if (token is OpenUnescapedExpressionToken) {
+      _state = ParserStates.UNESCAPED_EXPRESSION;
+      container.add(new UnescapedOutputNode(token.line));
     }
     else if (token is CloseToken) {
       throw new ParseException(token.line, token);     
@@ -89,25 +162,41 @@ class ParserImpl implements Parser {
     }
   }
   
-  void _processTokenInTemplateState(Token token, Queue<Fragment> stack) {
+  void _processTokenInTextState(Token token) {
+    ContainerNode container = _stack.last();
     if (token is TextToken) {
       throw new ParseException(token.line, token);    
     }
+    else if (token is OpenLayoutToken) {
+      if (container.isLayout) {
+        _state = ParserStates.SECTION_REFERENCE;
+        container.add(new SectionReferenceNode(token.line));
+      }
+      else {
+        _state = ParserStates.SECTION_DEFINITION;
+        if (container is SectionDefinitionNode) {
+          _stack.removeLast();          
+        }
+        var sectionDefinition = new SectionDefinitionNode(token.line); 
+        _stack.last().add(sectionDefinition);
+        _stack.add(sectionDefinition);
+      }
+    }    
     else if (token is OpenIncludeToken) {
       _state = ParserStates.INCLUDE;
-      stack.add(new IncludeFragment(token.line));
+      container.add(new IncludeNode(token.line));
     }
     else if (token is OpenCodeToken) {
       _state = ParserStates.CODE;
-      stack.add(new CodeFragment(token.line));
+      container.add(new CodeNode(token.line));
     }
     else if (token is OpenExpressionToken) {
       _state = ParserStates.ESCAPED_EXPRESSION;
-      stack.add(new EscapedOutputFragment(token.line));
+      container.add(new EscapedOutputNode(token.line));
     }
     else if (token is OpenUnescapedExpressionToken) {
       _state = ParserStates.UNESCAPED_EXPRESSION;
-      stack.add(new UnescapedOutputFragment(token.line));
+      container.add(new UnescapedOutputNode(token.line));
     }
     else if (token is CloseToken) {
       throw new ParseException(token.line, token);
@@ -117,14 +206,118 @@ class ParserImpl implements Parser {
     }
   }
   
-  void _processTokenInIncludeState(Token token, Queue<Fragment> stack) {
+  /** process layout declaration step */
+  void _processTokenInLayoutDeclarationState(Token token) {
+    assert(!_stack.first().isLayout);
+    LayoutDeclarationNode layoutDeclaration = (_stack.last() as TemplateNode).layout;
     if (token is TextToken) {
-      IncludeFragment includeToken = stack.last();
+      layoutDeclaration.layoutBase = token.content.trim();
+      assert(!layoutDeclaration.layoutBase.isEmpty());
+    }
+    else if (token is OpenLayoutToken) {
+      throw new ParseException(token.line, token);      
+    }
+    else if (token is OpenIncludeToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is OpenCodeToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is OpenExpressionToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is OpenUnescapedExpressionToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is CloseToken) {
+      if (layoutDeclaration.layoutBase === null) {
+        throw new ParseException(token.line, token);        
+      }
+      _state = ParserStates.WAITING_FOR_NEXT_TAG;      
+    }
+    else {
+      throw new IllegalArgumentException(token);  
+    }
+  }
+  
+  void _processTokenInSectionDefinitionState(Token token) {
+    assert(!_stack.first().isLayout);
+    SectionDefinitionNode section = _stack.last();
+    if (token is TextToken) {
+      section.name = token.content.trim();
+      assert(!section.name.isEmpty());
+    }
+    else if (token is OpenLayoutToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is OpenIncludeToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is OpenCodeToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is OpenExpressionToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is OpenUnescapedExpressionToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is CloseToken) {
+      if (section.name === null) {
+        throw new ParseException(token.line, token);        
+      }
+      _state = ParserStates.WAITING_FOR_NEXT_TAG;
+    }
+    else {
+      throw new IllegalArgumentException(token);  
+    }    
+  }
+  
+  void _processTokenInSectionReferenceState(Token token) {
+    assert((_stack.first() as TemplateNode).isLayout);
+    SectionReferenceNode sectionRef = _stack.last().last();
+    if (token is TextToken) {
+      sectionRef.name = token.content.trim();
+      assert(!sectionRef.name.isEmpty());      
+    }
+    else if (token is OpenLayoutToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is OpenIncludeToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is OpenCodeToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is OpenExpressionToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is OpenUnescapedExpressionToken) {
+      throw new ParseException(token.line, token);
+    }
+    else if (token is CloseToken) {
+      if (sectionRef.name === null) {
+        throw new ParseException(token.line, token);        
+      }
+      _state = ParserStates.WAITING_FOR_NEXT_TAG;
+    }
+    else {
+      throw new IllegalArgumentException(token);  
+    }
+  }
+  
+  void _processTokenInIncludeState(Token token) {
+    ContainerNode container = _stack.last();
+    if (token is TextToken) {
+      IncludeNode includeToken = container.last();
       if (includeToken.include != null) {
         throw new ParseException(token.line, token);        
       }
       includeToken.include = token.content;      
     }
+    else if (token is OpenLayoutToken) {
+      throw new ParseException(token.line, token);
+    }
     else if (token is OpenIncludeToken) {
       throw new ParseException(token.line, token);
     }
@@ -138,27 +331,31 @@ class ParserImpl implements Parser {
       throw new ParseException(token.line, token);
     }
     else if (token is CloseToken) {
-      IncludeFragment includeToken = stack.last();
-      if (includeToken.include == null) {
+      IncludeNode includeToken = container.last();
+      if (includeToken.include === null) {
         throw new ParseException(token.line, token);
       }
-      _state = ParserStates.UNKNOWN;
+      _state = ParserStates.WAITING_FOR_NEXT_TAG;
     }
     else {
       throw new IllegalArgumentException(token);
     }
   }
   
-  void _processTokenInCodeState(Token token, Queue<Fragment> stack) {
+  void _processTokenInCodeState(Token token) {
+    ContainerNode container = _stack.last();
     if (token is TextToken) {
-      CodeFragment codeFragment = stack.last();
-      if (codeFragment.code != null) {
+      CodeNode codeNode = container.last();
+      if (codeNode.code != null) {
         throw new ParseException(token.line, token);        
       }
-      codeFragment.code = token.content;
+      codeNode.code = token.content;
     }
+    else if (token is OpenLayoutToken) {
+      throw new ParseException(token.line, token);      
+    }    
     else if (token is OpenIncludeToken) {
-      throw new ParseException(token.line, token);    
+      throw new ParseException(token.line, token); 
     }
     else if (token is OpenCodeToken) {
       throw new ParseException(token.line, token);
@@ -170,25 +367,29 @@ class ParserImpl implements Parser {
       throw new ParseException(token.line, token);
     }
     else if (token is CloseToken) {
-      CodeFragment codeFragment = stack.last();
+      CodeNode codeFragment = container.last();
       if (codeFragment.code == null) {
         throw new ParseException(token.line, token);    
       }
-      _state = ParserStates.UNKNOWN;
+      _state = ParserStates.WAITING_FOR_NEXT_TAG;
     }
     else {
       throw new IllegalArgumentException(token);
     }
   }
   
-  void _processTokenInEscapedExpressionState(Token token, Queue<Fragment> stack) {
+  void _processTokenInEscapedExpressionState(Token token) {
+    ContainerNode container = _stack.last();
     if (token is TextToken) {
-      EscapedOutputFragment expressionFragment = stack.last();
+      EscapedOutputNode expressionFragment = container.last();
       if (expressionFragment.expression != null) {
         throw new ParseException(token.line, token);          
       }
       expressionFragment.expression = token.content;
     }
+    else if (token is OpenLayoutToken) {
+      throw new ParseException(token.line, token);      
+    }    
     else if (token is OpenIncludeToken) {
       throw new ParseException(token.line, token);  
     }
@@ -202,43 +403,47 @@ class ParserImpl implements Parser {
       throw new ParseException(token.line, token);    
     }
     else if (token is CloseToken) {
-      EscapedOutputFragment expressionFragment = stack.last();
+      EscapedOutputNode expressionFragment = container.last();
       if (expressionFragment == null) {
         throw new ParseException(token.line, token);
       }
-      _state = ParserStates.UNKNOWN;
+      _state = ParserStates.WAITING_FOR_NEXT_TAG;
     }
     else {
       throw new IllegalArgumentException(token);
     }
   }
   
-  void _processTokenInUnescapedExpressionState(Token token, Queue<Fragment> stack) {
+  void _processTokenInUnescapedExpressionState(Token token) {
+    ContainerNode container = _stack.last();
     if (token is TextToken) {
-      UnescapedOutputFragment expressionFragment = stack.last();
+      UnescapedOutputNode expressionFragment = container.last();
       if (expressionFragment.expression != null) {
         throw new ParseException(token.line, token);  
       }
       expressionFragment.expression = token.content;
     }
+    else if (token is OpenLayoutToken) {
+      throw new ParseException(token.line, token);            
+    }    
     else if (token is OpenIncludeToken) {
-      throw new ParseException(token.line, token);    
+      throw new ParseException(token.line, token);
     }
     else if (token is OpenCodeToken) {
-      throw new ParseException(token.line, token);    
+      throw new ParseException(token.line, token);
     }
     else if (token is OpenExpressionToken) {
-      throw new ParseException(token.line, token);    
+      throw new ParseException(token.line, token);
     }
     else if (token is OpenUnescapedExpressionToken) {
-      throw new ParseException(token.line, token);    
+      throw new ParseException(token.line, token);
     }
     else if (token is CloseToken) {
-      UnescapedOutputFragment expressionFragment = stack.last();
+      UnescapedOutputNode expressionFragment = container.last();
       if (expressionFragment == null) {
         throw new ParseException(token.line, token);
       }
-      _state = ParserStates.UNKNOWN;
+      _state = ParserStates.WAITING_FOR_NEXT_TAG;
     }
     else {
       throw new IllegalArgumentException(token);
@@ -278,20 +483,127 @@ class ParserImpl implements Parser {
  * This differs from typic parser output as usually parser produces
  * a AST, but in our case we have just a plain list of parsed elements.
 */
-abstract class Fragment {
+abstract class Node {
   /** A line number of this fragment */
   int _line;
   
-  Fragment(this._line);
+  Node(this._line);
   
 }
 
+/** For any node that may contain a children elements */
+abstract class ContainerNode extends Node
+                             implements Iterable<Node> {
+  /** a content of template */
+  List<Node> _content;
+  
+  ContainerNode _parent;
+  
+  ContainerNode(int line): super(line) {
+    _content = [];
+  }
+  
+  void add(Node node) {
+    if (node is ContainerNode) {
+      node.parent = this;      
+    }
+    _content.add(node);
+  }
+  
+  Node last() {
+    return _content.last();
+  }
+  
+  Node operator [](int index) {
+    return _content[index];
+  }
+  
+  void operator []=(int index, Node value) {
+    _content[index] = value;
+  }
+  
+  void forEach(void f(Node node)) {
+    _content.forEach(f);    
+  }
+  
+  Iterator<Node> iterator() {
+    return _content.iterator();
+  }
+  
+  bool get hasParent() => _parent !== null;
+  
+  ContainerNode get parent() => _parent;
+  
+  void set parent(ContainerNode value) { _parent = value; }
+  
+}
+
+/** A template */
+class TemplateNode extends ContainerNode {
+  
+  /** whenever a parsed template is layout template */
+  bool _isLayout;
+  /** a layout that used for a given template */
+  LayoutDeclarationNode _layout;
+  
+  TemplateNode(bool isLayout): super(0) {
+    _isLayout = isLayout;
+  }
+  
+  bool get isLayout() => _isLayout;
+  
+  LayoutDeclarationNode get layout() => _layout;
+  
+  void set layout(LayoutDeclarationNode value) { _layout = value; }
+  
+}
+
+/** Declares which layout is used for template */
+class LayoutDeclarationNode extends Node {
+  
+  String _layoutBase;
+  
+  LayoutDeclarationNode(int line): super(line);
+  
+  String get layoutBase() => _layoutBase;
+  
+  void set layoutBase(String value) { _layoutBase = value; }
+  
+}
+
+/** Declares a section definition that replaces corresponding layout placeholder. */
+class SectionDefinitionNode extends ContainerNode {
+  /** A name of given section definition */
+  String _name;
+  
+  SectionDefinitionNode(int line): super(line);
+  
+  String get name() => _name;
+  
+  void set name(String value) { _name = value; }
+  
+}
+
+/** Refers for a given section by its name in a layout definition */
+class SectionReferenceNode extends Node {
+  /** a name of section we refer to */
+  String _name;
+  
+  SectionReferenceNode(int line): super(line);
+  
+  String get name() => _name;
+  
+  void set name(String value) { _name = value; }
+  
+}
+
+
 /** An include */
-class IncludeFragment extends Fragment {
+class IncludeNode extends Node {
   
   String _include;
   
-  IncludeFragment(int line): super(line);
+  IncludeNode(int line): super(line);
   
   String get include() => _include;
   
@@ -300,22 +612,22 @@ class IncludeFragment extends Fragment {
 }
 
 /** An plain fragment of template */
-class TemplateFragment extends Fragment {
+class TextNode extends Node {
   
   String _text;
   
-  TemplateFragment(this._text, int line): super(line);
+  TextNode(this._text, int line): super(line);
   
   String get text() => _text;
     
 }
 
 /** A fragment of code */
-class CodeFragment extends Fragment {
+class CodeNode extends Node {
   
   String _code;
   
-  CodeFragment(int line): super(line);
+  CodeNode(int line): super(line);
   
   String get code() => _code;
   
@@ -324,11 +636,11 @@ class CodeFragment extends Fragment {
 }
 
 /** An expression which value is html escaped before it appended to an output */
-class EscapedOutputFragment extends Fragment {
+class EscapedOutputNode extends Node {
   
   String _expression;
   
-  EscapedOutputFragment(int line): super(line);
+  EscapedOutputNode(int line): super(line);
   
   String get expression() => _expression;
   
@@ -337,11 +649,11 @@ class EscapedOutputFragment extends Fragment {
 }
 
 /** An expression which value is directly appended to an output */
-class UnescapedOutputFragment extends Fragment {
+class UnescapedOutputNode extends Node {
   
   String _expression;
   
-  UnescapedOutputFragment(int line): super(line);
+  UnescapedOutputNode(int line): super(line);
   
   String get expression() => _expression;
   
@@ -351,18 +663,25 @@ class UnescapedOutputFragment extends Fragment {
 
 /** Any available parser states */
 class ParserStates {
+  static final int TEMPLATE_START = -2;
   /** an unitialized state */
-  static final int UNKNOWN = -1;
+  static final int WAITING_FOR_NEXT_TAG = -1;
   /** processing a template content */
-  static final int TEMPLATE = 0;
+  static final int TEXT = 0;
+  /** processing a layout declaration content */
+  static final int LAYOUT_DECLARATION = 1;
+  /** processing a section definition content */
+  static final int SECTION_DEFINITION = 2;
+  /** processing a section reference content */
+  static final int SECTION_REFERENCE = 3;  
   /** processing an include content */
-  static final int INCLUDE = 1;
+  static final int INCLUDE = 4;
   /** processing a code fragment */
-  static final int CODE = 2;
+  static final int CODE = 5;
   /** processing an escaped expression */
-  static final int ESCAPED_EXPRESSION = 3;
+  static final int ESCAPED_EXPRESSION = 6;
   /** processing an unescaped expression */
-  static final int UNESCAPED_EXPRESSION = 4;
+  static final int UNESCAPED_EXPRESSION = 7;
 }
 
 /** thrown when parse exception arise */

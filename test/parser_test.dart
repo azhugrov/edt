@@ -15,12 +15,12 @@ void main() {
                         'what we do here {{- do you understand me}}\n'
                         'and finally this is our last line';
     var parser = new Parser();
-    List<Fragment> ast = parser.parse(unparsedText);
+    List<Node> ast = parser.parse(unparsedText);
     expect(ast.length, equals(9));    
   });  
 }
 
-void printFragments(List<Fragment> fragments) {
+void printFragments(List<Node> fragments) {
   expect(fragments, isNotNull);
   print("we here");
   for (var fragment in fragments) {
