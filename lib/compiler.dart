@@ -4,8 +4,7 @@
 /** Compiles templates to a dart class */
 class Compiler {
   /** A base emitter implementation */
-  TemplateEmitter emitter;
-    
+  TemplateEmitter emitter;    
   /** Dir for compile output */
   String _outDirectory;
   /** An template to compile */
@@ -89,11 +88,12 @@ class Compiler {
   }
   
   void _processTemplate(String templatePath, StringBuffer buf) {
-    TemplateNode template = _parseTemplate(templatePath);
+    TemplateNode template = _parseTemplate(templatePath, false, false);
     if (template.hasLayout) {
-      Map<String, SectionDefinitionNode> sections = _buildSectionsMap(template);
+      var sections = _buildSectionsMap(template);
       String layoutPath = pathJoin([pathDirname(templatePath), template.layout.layoutBase]);
-      _processLayout(layoutPath, sections, buf);                  
+      Template expandedTemplate = _processLayout(layoutPath, sections);
+      _emitTemplate(expandedTemplate, buf);
     }
     else {
       _emitTemplate(template, buf);        
@@ -125,7 +125,7 @@ class Compiler {
   
   /** process given layout and expands any reference with concrete definitions */
   TemplateNode _processLayout(String layoutPath, Map<String, SectionDefinitionNode> sections) {
-    TemplateNode layout = _parseTemplate(layoutPath);
+    TemplateNode layout = _parseTemplate(layoutPath, true, false);
     //then we should expact any section reference 
     //with content of corresponding section definition
     layout.expandTree(List<Node> replace(Node node) {
@@ -153,7 +153,7 @@ class Compiler {
       else if (node is IncludeNode) {
         String includePath = pathJoin([pathDirname(templatePath), node.include]);
         //Q: should it already apply a transformation recursively?
-        TemplateNode include = _parseTemplate(includePath);
+        TemplateNode include = _parseTemplate(includePath, false, true);
         //then we should replace existing include node with content
         return include.children;
       }

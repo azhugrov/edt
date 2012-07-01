@@ -1,8 +1,10 @@
-{{~ layout.edt }}
+{{~ layout.ledt }}
 {{~ title}}
     Here a title content
+{{~ head }}
+    <sript type="text/javascript" src=""></script>
 {{~ content}}
- 	{{> include.edt }}
+ 	{{> include.iedt }}
  	<div>
  	   {{ if (data["condition"]) { }}
  	   		<span>{{=data["one"]}}</span>
