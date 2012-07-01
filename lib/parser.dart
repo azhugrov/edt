@@ -7,7 +7,7 @@ interface Parser default ParserImpl {
   Parser();
   
   /** Parses a given template text */
-  TemplateNode parse(String src);  
+  TemplateNode parse(String src, [bool isLayout=false, bool isInclude=false]);  
   
 }
 
@@ -25,17 +25,17 @@ class ParserImpl implements Parser {
     _stack = new Queue<ContainerNode>();
   }
   
-  TemplateNode parse(String src, [bool isLayout=false]) {
+  TemplateNode parse(String src, [bool isLayout=false, bool isInclude=false]) {
     var parsed = <Node>[];
     var lines = _toLines(src);
     var scanner = new Scanner(lines);
-    return _processTokenStream(scanner.tokenize(), isLayout);   
+    return _processTokenStream(scanner.tokenize(), isLayout, isInclude);   
   }
   
   /** Process a token stream */
-  TemplateNode _processTokenStream(List<Token> tokens, bool isLayout) {
+  TemplateNode _processTokenStream(List<Token> tokens, bool isLayout, bool isInclude) {
     Iterator<Token> tokenIterator = tokens.iterator();
-    TemplateNode template = new TemplateNode(isLayout);
+    TemplateNode template = new TemplateNode(isLayout, isInclude);
     _stack.add(template);
     while (tokenIterator.hasNext()) {
       Token token = tokenIterator.next();
@@ -84,6 +84,9 @@ class ParserImpl implements Parser {
       template.add(new TextNode(token.content, token.line));
     }
     else if (token is OpenLayoutToken) {
+      if (template.isInclude) {
+        throw new ParseException(token.line, token);        
+      }
       if (template.isLayout) {
         _state = ParserStates.SECTION_REFERENCE;
         template.add(new SectionReferenceNode(token.line));
@@ -124,11 +127,15 @@ class ParserImpl implements Parser {
       container.add(new TextNode(token.content, token.line));
     }
     else if (token is OpenLayoutToken) {
-      if ((_stack.first() as TemplateNode).isLayout) {
+      if (_currentTemplate.isInclude) {
+        throw new ParseException(token.line, token);
+      }      
+      if (_currentTemplate.isLayout) {
         _state = ParserStates.SECTION_REFERENCE;
         container.add(new SectionReferenceNode(token.line));
       }
       else {
+        assert(_stack.first().hasLayout);
         _state = ParserStates.SECTION_DEFINITION;
         if (container is SectionDefinitionNode) {
           _stack.removeLast();          
@@ -168,11 +175,12 @@ class ParserImpl implements Parser {
       throw new ParseException(token.line, token);    
     }
     else if (token is OpenLayoutToken) {
-      if (container.isLayout) {
+      if ((_stack.first() as TemplateNode).isLayout) {
         _state = ParserStates.SECTION_REFERENCE;
         container.add(new SectionReferenceNode(token.line));
       }
       else {
+        assert(_stack.first().hasLayout);
         _state = ParserStates.SECTION_DEFINITION;
         if (container is SectionDefinitionNode) {
           _stack.removeLast();          
@@ -208,7 +216,7 @@ class ParserImpl implements Parser {
   
   /** process layout declaration step */
   void _processTokenInLayoutDeclarationState(Token token) {
-    assert(!_stack.first().isLayout);
+    assert(!(_stack.first() as TemplateNode).isLayout);
     LayoutDeclarationNode layoutDeclaration = (_stack.last() as TemplateNode).layout;
     if (token is TextToken) {
       layoutDeclaration.layoutBase = token.content.trim();
@@ -241,7 +249,7 @@ class ParserImpl implements Parser {
   }
   
   void _processTokenInSectionDefinitionState(Token token) {
-    assert(!_stack.first().isLayout);
+    assert(!(_stack.first() as TemplateNode).isLayout);
     SectionDefinitionNode section = _stack.last();
     if (token is TextToken) {
       section.name = token.content.trim();
@@ -313,7 +321,8 @@ class ParserImpl implements Parser {
       if (includeToken.include != null) {
         throw new ParseException(token.line, token);        
       }
-      includeToken.include = token.content;      
+      includeToken.include = token.content.trim();
+      assert(!includeToken.include.isEmpty());
     }
     else if (token is OpenLayoutToken) {
       throw new ParseException(token.line, token);
@@ -448,16 +457,9 @@ class ParserImpl implements Parser {
     else {
       throw new IllegalArgumentException(token);
     }
-  }  
-  
-  List _toList(Queue queue) {
-    var result = [];
-    for (var item in queue) {
-      result.add(item);        
-    }
-    return result;
   }
   
+  TemplateNode get _currentTemplate() => _stack.first as TemplateNode;
   
   /** Transforms to lines */
   List<String> _toLines(String src) {
@@ -474,8 +476,7 @@ class ParserImpl implements Parser {
       lines.add(buf.toString());      
     }
     return lines;
-  }
-  
+  }  
 }
 
 /** 
@@ -526,6 +527,35 @@ abstract class ContainerNode extends Node
     _content.forEach(f);    
   }
   
+  /** 
+   *  [replace] a function that returns either null or a List of 
+   *  nodes that should replace a processed node. Right now this is used 
+   *  for a processing includes 
+   */
+  void expandTree(List<Node> replace(Node node)) {
+    int listWalker = 0;
+    while(listWalker < _content.length) {
+      List<Node> toReplace = replace(_content[listWalker]);
+      if (toReplace !== null) {
+        //replace old node with a new one
+        if (toReplace.isEmpty()) throw new Exception("replacement list should not be empty");
+        _content.removeRange(listWalker, 1); //remove old node
+        _content.insertRange(listWalker, toReplace.length);
+        for (int i = 0; i < toReplace.length; i++) {
+          _content[listWalker] = toReplace[i];
+          listWalker++; //increment a list walker value
+        }
+      }
+      else {
+        //do nothing.
+        listWalker++;
+      }
+    }    
+  }
+  
+  /** return a list of children for a given node */
+  List<Node> get children() => _content; 
+  
   Iterator<Node> iterator() {
     return _content.iterator();
   }
@@ -540,19 +570,22 @@ abstract class ContainerNode extends Node
 
 /** A template */
 class TemplateNode extends ContainerNode {
-  
   /** whenever a parsed template is layout template */
   bool _isLayout;
+  /** whenever a parsed template is include template */
+  bool _isInclude;
   /** a layout that used for a given template */
   LayoutDeclarationNode _layout;
   
-  TemplateNode(bool isLayout): super(0) {
-    _isLayout = isLayout;
-  }
+  TemplateNode(this._isLayout, this._isInclude): super(0);
   
   bool get isLayout() => _isLayout;
   
+  bool get isInclude() => _isInclude;
+  
   LayoutDeclarationNode get layout() => _layout;
+  
+  bool get hasLayout() => _layout !== null;
   
   void set layout(LayoutDeclarationNode value) { _layout = value; }
   

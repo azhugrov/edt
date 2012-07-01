@@ -43,7 +43,7 @@ class Compiler {
   /** Compile a given template to output directory */
   void compile() {
     if (_templateFile !== null) {
-      _compileFile(pathJoin([_cwd, templateFile]), pathJoin([_cwd, _outDirectory]));      
+      _compileFile(pathJoin([_cwd, _templateFile]), pathJoin([_cwd, _outDirectory]));      
     } 
     else {
       //process dir
@@ -89,35 +89,105 @@ class Compiler {
   }
   
   void _processTemplate(String templatePath, StringBuffer buf) {
+    TemplateNode template = _parseTemplate(templatePath);
+    if (template.hasLayout) {
+      Map<String, SectionDefinitionNode> sections = _buildSectionsMap(template);
+      String layoutPath = pathJoin([pathDirname(templatePath), template.layout.layoutBase]);
+      _processLayout(layoutPath, sections, buf);                  
+    }
+    else {
+      _emitTemplate(template, buf);        
+    }        
+  }
+  
+  TemplateNode _parseTemplate(String templatePath, bool isLayout, bool isInclude) {
     String templateSrc = _readTemplate(templatePath);
-    List<Node> ast;
+    TemplateNode template;
     try {
-      ast = new Parser().parse(templateSrc);
+      template = new Parser().parse(templateSrc, isLayout, isInclude);
     } catch(ParseException e) {
       print("could not parse: $templatePath");
       throw e;
     }
-    Iterator<Node> astIterator = ast.iterator();
-    while (astIterator.hasNext()) {
-      Node fragment = astIterator.next();
-      if (fragment is TextNode) {
-        buf.add(emitter.emitTemplateFragment(fragment));        
-      }
-      else if (fragment is CodeNode) {
-        buf.add(emitter.emitCodeFragment(fragment));        
-      }
-      else if (fragment is EscapedOutputFragment) {
-        buf.add(emitter.emitEscapedOutputFragment(fragment));        
-      }
-      else if (fragment is UnescapedOutputNode) {
-        buf.add(emitter.emitUnescapedOutputFragment(fragment));        
-      }
-      else if (fragment is IncludeNode) { 
-        String includePath = pathJoin([pathDirname(templatePath), fragment.include.trim()]);          
-         _processTemplate(includePath, buf);        
-      }
-    }        
+    _processIncludes(templatePath, template);
+    return template;
   }
+  
+  Map<String, SectionDefinitionNode> _buildSectionsMap(TemplateNode template) {
+    var sectionsMap = <SectionDefinitionNode>{};
+    template.forEach((Node node) {
+      if (node is SectionDefinitionNode) {
+        sectionsMap[node.name] = node;        
+      }
+    });
+    return sectionsMap;
+  }  
+  
+  /** process given layout and expands any reference with concrete definitions */
+  TemplateNode _processLayout(String layoutPath, Map<String, SectionDefinitionNode> sections) {
+    TemplateNode layout = _parseTemplate(layoutPath);
+    //then we should expact any section reference 
+    //with content of corresponding section definition
+    layout.expandTree(List<Node> replace(Node node) {
+      if (node is SectionReferenceNode) {
+        SectionDefinitionNode section = sections[node.name];
+        if (section !== null) {
+          return section.children;
+        } else {
+          throw new Exception("Please provide a section definition for following reference: [${section.name}]");
+        }        
+      } else {
+        return null;
+      }     
+    });
+    return layout;
+  }
+  
+  /** Resolves any includes and returns an expanded tree. */
+  TemplateNode _processIncludes(String templatePath, ContainerNode container) {
+    container.expandTree(List<Node> replacement(node) {
+      if (node is SectionDefinitionNode) {
+        //process a section definition recursively
+        _processIncludes(templatePath, node);
+      } 
+      else if (node is IncludeNode) {
+        String includePath = pathJoin([pathDirname(templatePath), node.include]);
+        //Q: should it already apply a transformation recursively?
+        TemplateNode include = _parseTemplate(includePath);
+        //then we should replace existing include node with content
+        return include.children;
+      }
+      return null; //return null if we simply doesn't have to expand a given node
+    });
+    return container;
+  }
+  
+  /** 
+   * Should be invocked after:
+   * - process include phase
+   * - process layout phase 
+   */  
+  void _emitTemplate(TemplateNode template, StringBuffer buf) {
+    Iterator<Node> astIterator = template.iterator();
+    while (astIterator.hasNext()) {
+      Node node = astIterator.next();
+      if (node is TextNode) {
+        buf.add(emitter.emitTextFragment(node));        
+      }
+      else if (node is CodeNode) {
+        buf.add(emitter.emitCodeFragment(node));        
+      }
+      else if (node is EscapedOutputNode) {
+        buf.add(emitter.emitEscapedOutputFragment(node));        
+      }
+      else if (node is UnescapedOutputNode) {
+        buf.add(emitter.emitUnescapedOutputFragment(node));        
+      }
+      else {
+        throw new Exception("could not generate code for a following token: $node");
+      }
+    }    
+  }  
   
   /** Transform to a template class name */
   String _toClassName(String templatePath) {
