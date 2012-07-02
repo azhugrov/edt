@@ -33,4 +33,4 @@ All path should be relative to a worker directory.
 
 An example of the syntax could be found in the test folder.
 
-I also recently released to public [a real life website example](https://github.com/zhygr/simple-dart-site)
+I also have recently released to a public [a real life website example](https://github.com/zhygr/simple-dart-site)
