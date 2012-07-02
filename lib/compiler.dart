@@ -92,7 +92,7 @@ class Compiler {
     if (template.hasLayout) {
       var sections = _buildSectionsMap(template);
       String layoutPath = pathJoin([pathDirname(templatePath), template.layout.layoutBase]);
-      Template expandedTemplate = _processLayout(layoutPath, sections);
+      TemplateNode expandedTemplate = _processLayout(layoutPath, sections);
       _emitTemplate(expandedTemplate, buf);
     }
     else {
@@ -144,7 +144,7 @@ class Compiler {
   }
   
   /** Resolves any includes and returns an expanded tree. */
-  TemplateNode _processIncludes(String templatePath, ContainerNode container) {
+  ContainerNode _processIncludes(String templatePath, ContainerNode container) {
     container.expandTree(List<Node> replacement(node) {
       if (node is SectionDefinitionNode) {
         //process a section definition recursively

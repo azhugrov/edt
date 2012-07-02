@@ -15,7 +15,7 @@ void main() {
                         'what we do here {{- do you understand me}}\n'
                         'and finally this is our last line';
     var parser = new Parser();
-    List<Node> ast = parser.parse(unparsedText);
+    TemlateNode ast = parser.parse(unparsedText, false, false);
     expect(ast.length, equals(9));    
   });  
 }

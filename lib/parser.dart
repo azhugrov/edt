@@ -135,7 +135,7 @@ class ParserImpl implements Parser {
         container.add(new SectionReferenceNode(token.line));
       }
       else {
-        assert(_stack.first().hasLayout);
+        assert(_currentTemplate.hasLayout);
         _state = ParserStates.SECTION_DEFINITION;
         if (container is SectionDefinitionNode) {
           _stack.removeLast();          
@@ -180,7 +180,7 @@ class ParserImpl implements Parser {
         container.add(new SectionReferenceNode(token.line));
       }
       else {
-        assert(_stack.first().hasLayout);
+        assert(_currentTemplate.hasLayout);
         _state = ParserStates.SECTION_DEFINITION;
         if (container is SectionDefinitionNode) {
           _stack.removeLast();          
@@ -459,7 +459,7 @@ class ParserImpl implements Parser {
     }
   }
   
-  TemplateNode get _currentTemplate() => _stack.first as TemplateNode;
+  TemplateNode get _currentTemplate() => _stack.first();
   
   /** Transforms to lines */
   List<String> _toLines(String src) {
@@ -522,6 +522,8 @@ abstract class ContainerNode extends Node
   void operator []=(int index, Node value) {
     _content[index] = value;
   }
+  
+  int get length() => _content.length;
   
   void forEach(void f(Node node)) {
     _content.forEach(f);    
@@ -696,25 +698,25 @@ class UnescapedOutputNode extends Node {
 
 /** Any available parser states */
 class ParserStates {
-  static final int TEMPLATE_START = -2;
+  static final int TEMPLATE_START = 0;
   /** an unitialized state */
-  static final int WAITING_FOR_NEXT_TAG = -1;
+  static final int WAITING_FOR_NEXT_TAG = 1;
   /** processing a template content */
-  static final int TEXT = 0;
+  static final int TEXT = 2;
   /** processing a layout declaration content */
-  static final int LAYOUT_DECLARATION = 1;
+  static final int LAYOUT_DECLARATION = 3;
   /** processing a section definition content */
-  static final int SECTION_DEFINITION = 2;
+  static final int SECTION_DEFINITION = 4;
   /** processing a section reference content */
-  static final int SECTION_REFERENCE = 3;  
+  static final int SECTION_REFERENCE = 5;  
   /** processing an include content */
-  static final int INCLUDE = 4;
+  static final int INCLUDE = 6;
   /** processing a code fragment */
-  static final int CODE = 5;
+  static final int CODE = 7;
   /** processing an escaped expression */
-  static final int ESCAPED_EXPRESSION = 6;
+  static final int ESCAPED_EXPRESSION = 8;
   /** processing an unescaped expression */
-  static final int UNESCAPED_EXPRESSION = 7;
+  static final int UNESCAPED_EXPRESSION = 9;
 }
 
 /** thrown when parse exception arise */
