@@ -8,6 +8,7 @@ Embedded Dart Templates
   * Html escaped expressions with `{{= ..expression.. }}`
   * Unescaped expressions with `{{- ..expression.. }}`
   * Static includes support with `{{> relative_path }}` where path is relative from a base template
+  * More advanced layout system support ([details here](http://azhuhrou.blogspot.com/2012/07/layout-support-in-embedded-dart.html))
 
 ##Example
   <div>
@@ -31,3 +32,5 @@ Be aware that currently we do not support absolute paths as the compiler paramet
 All path should be relative to a worker directory.
 
 An example of the syntax could be found in the test folder.
+
+I also have recently released to a public [a real life website example](https://github.com/zhygr/simple-dart-site)

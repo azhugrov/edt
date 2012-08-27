@@ -46,7 +46,7 @@ class Compiler {
     } 
     else {
       //process dir
-      _compileFolder(pathJoin([_cwd, _srcDir]), pathJoin([_cwd, _outDirectory]));
+      _compileFolder(pathJoin([_cwd, _srcDir]), pathJoin([_cwd, _outDirectory]), pathJoin([_cwd, _srcDir]));
     }
   }
   
@@ -54,14 +54,16 @@ class Compiler {
     * Compiles all files in a given folder 
     * [srcDir] source directory (absolute path)
     * [outDir] corresponding output directory (absolute path)
+    * [srcRoot] the path to the directory that is provided with --src option. 
+    *           Used for a template name generation.
     */
-  void _compileFolder(String srcDir, String outDir) {
+  void _compileFolder(String srcDir, String outDir, [String srcRoot]) {
     Directory subDir = new Directory(srcDir);
     DirectoryLister dirWalker = subDir.list(false);
     dirWalker.onFile = onFile(String filePath) {
        if (pathExtname(filePath) == ".edt") {
          print("found a template file: $filePath");
-         _compileFile(filePath, outDir);
+         _compileFile(filePath, outDir, srcRoot);
        }
     };
     //Handles other directories
@@ -74,13 +76,13 @@ class Compiler {
          print("create an output subdirectory: ${outSubDirectory.path}");
          outSubDirectory.createSync();         
        }
-       _compileFolder(subDirPath, outSubDirectory.path);
+       _compileFolder(subDirPath, outSubDirectory.path, srcRoot);
     }; 
   }
   
-  void _compileFile(String templateFile, String outDir) {
+  void _compileFile(String templateFile, String outDir, [String srcRoot]) {
     var buf = new StringBuffer();
-    buf.add(emitter.emitStartClass(_toClassName(templateFile)));
+    buf.add(emitter.emitStartClass(_toClassName(templateFile, srcRoot)));
     _processTemplate(templateFile, buf);      
     buf.add(emitter.emitEndClass());
     String outputFile = pathJoin([outDir, "${pathBasename(templateFile, ".edt")}.dart"]);
@@ -190,7 +192,12 @@ class Compiler {
   }  
   
   /** Transform to a template class name */
-  String _toClassName(String templatePath) {
+  String _toClassName(String templatePath, [String srcRoot]) {
+    if (srcRoot !== null) {
+      var rootNormalized = pathNormalize(srcRoot);
+      var pathNormalized = pathNormalize(templatePath);
+      templatePath = templatePath.substring(rootNormalized.length);            
+    }
     return templatePath.replaceAll(const RegExp(@"[\\/\.:]+"), "_");
   }
   
