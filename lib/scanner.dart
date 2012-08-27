@@ -123,7 +123,7 @@ abstract class Token {
   
   Token(this._line);
   
-  int get line() => _line;
+  int get line => _line;
   
 }
 
@@ -193,7 +193,7 @@ class TextToken extends Token {
   
   TextToken(this._content, int line): super(line);
   /** gets a content of a given token */
-  String get content() => _content;
+  String get content => _content;
   
   String toString() {
     return "TextToken[line=${line};content=${content}]";  

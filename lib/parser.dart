@@ -459,7 +459,7 @@ class ParserImpl implements Parser {
     }
   }
   
-  TemplateNode get _currentTemplate() => _stack.first();
+  TemplateNode get _currentTemplate => _stack.first();
   
   /** Transforms to lines */
   List<String> _toLines(String src) {
@@ -523,7 +523,7 @@ abstract class ContainerNode extends Node
     _content[index] = value;
   }
   
-  int get length() => _content.length;
+  int get length => _content.length;
   
   void forEach(void f(Node node)) {
     _content.forEach(f);    
@@ -556,15 +556,15 @@ abstract class ContainerNode extends Node
   }
   
   /** return a list of children for a given node */
-  List<Node> get children() => _content; 
+  List<Node> get children => _content;
   
   Iterator<Node> iterator() {
     return _content.iterator();
   }
   
-  bool get hasParent() => _parent !== null;
+  bool get hasParent => _parent !== null;
   
-  ContainerNode get parent() => _parent;
+  ContainerNode get parent => _parent;
   
   void set parent(ContainerNode value) { _parent = value; }
   
@@ -581,13 +581,13 @@ class TemplateNode extends ContainerNode {
   
   TemplateNode(this._isLayout, this._isInclude): super(0);
   
-  bool get isLayout() => _isLayout;
+  bool get isLayout => _isLayout;
   
-  bool get isInclude() => _isInclude;
+  bool get isInclude => _isInclude;
   
-  LayoutDeclarationNode get layout() => _layout;
+  LayoutDeclarationNode get layout => _layout;
   
-  bool get hasLayout() => _layout !== null;
+  bool get hasLayout => _layout !== null;
   
   void set layout(LayoutDeclarationNode value) { _layout = value; }
   
@@ -600,7 +600,7 @@ class LayoutDeclarationNode extends Node {
   
   LayoutDeclarationNode(int line): super(line);
   
-  String get layoutBase() => _layoutBase;
+  String get layoutBase => _layoutBase;
   
   void set layoutBase(String value) { _layoutBase = value; }
   
@@ -613,7 +613,7 @@ class SectionDefinitionNode extends ContainerNode {
   
   SectionDefinitionNode(int line): super(line);
   
-  String get name() => _name;
+  String get name => _name;
   
   void set name(String value) { _name = value; }
   
@@ -626,7 +626,7 @@ class SectionReferenceNode extends Node {
   
   SectionReferenceNode(int line): super(line);
   
-  String get name() => _name;
+  String get name => _name;
   
   void set name(String value) { _name = value; }
   
@@ -640,7 +640,7 @@ class IncludeNode extends Node {
   
   IncludeNode(int line): super(line);
   
-  String get include() => _include;
+  String get include => _include;
   
          set include(String value) => _include = value;  
   
@@ -653,7 +653,7 @@ class TextNode extends Node {
   
   TextNode(this._text, int line): super(line);
   
-  String get text() => _text;
+  String get text => _text;
     
 }
 
@@ -664,7 +664,7 @@ class CodeNode extends Node {
   
   CodeNode(int line): super(line);
   
-  String get code() => _code;
+  String get code => _code;
   
          set code(String value) => _code = value; 
     
@@ -677,7 +677,7 @@ class EscapedOutputNode extends Node {
   
   EscapedOutputNode(int line): super(line);
   
-  String get expression() => _expression;
+  String get expression => _expression;
   
          set expression(String value) => _expression = value; 
     
@@ -690,7 +690,7 @@ class UnescapedOutputNode extends Node {
   
   UnescapedOutputNode(int line): super(line);
   
-  String get expression() => _expression;
+  String get expression => _expression;
   
          set expression(String value) => _expression = value;
     
@@ -726,9 +726,9 @@ class ParseException implements Exception {
   
   const ParseException(this._line, this._unexpectedToken);
   
-  String get exceptionName() => "ParseException";  
+  String get exceptionName => "ParseException";
   /** A line where parse exception occured */
-  int get line() => _line;
+  int get line => _line;
   /** An unexpected token */
   Token unexpectedToken() => _unexpectedToken;
 }
