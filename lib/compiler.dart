@@ -107,7 +107,7 @@ class Compiler {
     TemplateNode template;
     try {
       template = new Parser().parse(templateSrc, isLayout, isInclude);
-    } catch(ParseException e) {
+    } on ParseException catch(e) {
       print("could not parse: $templatePath");
       throw e;
     }
