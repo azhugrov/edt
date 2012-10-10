@@ -2,12 +2,12 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-#library("desntech:template-test");
-#import("dart:io");
-#import("../RuntimeLib.dart");
+library desntech_template_test;
+import 'dart:io';
+import '../RuntimeLib.dart';
 //yes, it sucks. you need define your path in order to run this test
-#import("../../dart/dart-sdk/lib/unittest/unittest.dart");
-#source("example.dart");
+import '../../dart/dart-sdk/lib/unittest/unittest.dart';
+part 'example.dart';
 
 void main() {
   test("simple case", () {

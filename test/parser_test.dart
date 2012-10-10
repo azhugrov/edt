@@ -2,10 +2,10 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-#library("desntech:parser-test");
-#import("../Lib.dart");
+library desntech_parser_test;
+import '../Lib.dart';
 //yes, it sucks. you need define your path in order to run this test
-#import("../../dart/dart-sdk/lib/unittest/unittest.dart");
+import '../../dart/dart-sdk/lib/unittest/unittest.dart';
 
 void main() {
   test("simple case", () {

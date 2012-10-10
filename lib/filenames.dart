@@ -23,8 +23,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-#library('filenames');
-#import('dart:io');
+library filenames;
+import 'dart:io';
 
 final RegExp SplitDeviceReWin = const RegExp(@"^([a-zA-Z]:|[\\/]{2}[^\\/]+[\\/][^\\/]+)?([\\/])?([\s\S]*?)$");
 final RegExp SplitTailReWin = const RegExp(@"^([\s\S]+[\\/](?!$)|[\\/])?((?:[\s\S]+?)?(\.[^.]*)?)$");
