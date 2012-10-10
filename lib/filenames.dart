@@ -26,9 +26,9 @@
 library filenames;
 import 'dart:io';
 
-final RegExp SplitDeviceReWin = const RegExp(@"^([a-zA-Z]:|[\\/]{2}[^\\/]+[\\/][^\\/]+)?([\\/])?([\s\S]*?)$");
-final RegExp SplitTailReWin = const RegExp(@"^([\s\S]+[\\/](?!$)|[\\/])?((?:[\s\S]+?)?(\.[^.]*)?)$");
-final RegExp SplitPathRePosix = const RegExp(@"^(\/?)([\s\S]+\/(?!$)|\/)?((?:[\s\S]+?)?(\.[^.]*)?)$");
+final RegExp SplitDeviceReWin = const RegExp(r"^([a-zA-Z]:|[\\/]{2}[^\\/]+[\\/][^\\/]+)?([\\/])?([\s\S]*?)$");
+final RegExp SplitTailReWin = const RegExp(r"^([\s\S]+[\\/](?!$)|[\\/])?((?:[\s\S]+?)?(\.[^.]*)?)$");
+final RegExp SplitPathRePosix = const RegExp(r"^(\/?)([\s\S]+\/(?!$)|\/)?((?:[\s\S]+?)?(\.[^.]*)?)$");
 
 /** 
  * resolves . and .. elements in a path array with directory names there
@@ -100,12 +100,12 @@ String pathNormalize(String path) {
     bool isUnc = (device != "" && device !== null) && device.substring(1, 2) != ":";
     bool isAbsolute = result.group(2) != null || isUnc; // UNC paths are always absolute
     String tail = result.group(3);
-    bool trailingSlash = const RegExp(@"[\\/]$").hasMatch(tail);
-    List<String> pathParts = tail.split(const RegExp(@"[\\/]+")).filter((part) {
+    bool trailingSlash = const RegExp(r"[\\/]$").hasMatch(tail);
+    List<String> pathParts = tail.split(const RegExp(r"[\\/]+")).filter((part) {
       return part != "";
     });
     // Normalize the tail path
-    tail = Strings.join(_normalizeArray(pathParts, !isAbsolute), @"\");
+    tail = Strings.join(_normalizeArray(pathParts, !isAbsolute), r"\");
   
     if (tail === null && !isAbsolute) {
       tail = '.';
@@ -117,7 +117,7 @@ String pathNormalize(String path) {
     var buf = new StringBuffer();
     buf.add(device);
     if (isAbsolute) {
-      buf.add(@"\");      
+      buf.add(r"\");      
     } 
     buf.add(tail);
     return buf.toString();
@@ -146,12 +146,12 @@ String pathJoin(List<String> paths) {
   bool isWindows = Platform.operatingSystem == 'windows';
   if (isWindows) {
     List<String> filteredPaths = paths.filter((String path) => path != "");
-    String joined = Strings.join(filteredPaths, @"\");
+    String joined = Strings.join(filteredPaths, r"\");
 
     // Make sure that the joined path doesn't start with two slashes
     // - it will be mistaken for an unc path by normalize() -
     // unless the paths[0] also starts with two slashes
-    if (const RegExp(@"^[\\/]{2}").hasMatch(joined) && !(const RegExp(@"^[\\/]{2}").hasMatch(paths[0]))) {
+    if (const RegExp(r"^[\\/]{2}").hasMatch(joined) && !(const RegExp(r"^[\\/]{2}").hasMatch(paths[0]))) {
       joined = joined.substring(1);
     }
     return pathNormalize(joined);      

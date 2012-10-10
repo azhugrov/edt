@@ -198,7 +198,7 @@ class Compiler {
       var pathNormalized = pathNormalize(templatePath);
       templatePath = templatePath.substring(rootNormalized.length);            
     }
-    return templatePath.replaceAll(const RegExp(@"[\\/\.:]+"), "_");
+    return templatePath.replaceAll(const RegExp(r"[\\/\.:]+"), "_");
   }
   
   /** 
